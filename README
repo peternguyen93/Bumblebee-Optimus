@@ -1,0 +1,15 @@
+Bumblebee Optimus
+
+Support user to use optirun easily
+
+Version : testing
+Author: Peter Nguyen
+
+# Install
+
+run :
+      chmod u+x install.sh
+      ./install.sh
+remove:
+      chmod u+x uninstall.sh
+      ./uninstall.sh
