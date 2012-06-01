@@ -6,12 +6,15 @@
     Help to run program with nvidia card easily
  
     Change Log:
-	-> Chang GUI
+	---> Change GUI
 	---> Add program button
 	---> Remove program button
+	---> Add system tray
+	---> Add Auto Start
+	---> Fix Bug
 	
     Author: PeterNguyen
-    Version : test 2
+    Version : testing 3
 """
 
 import os
@@ -33,27 +36,62 @@ class Optimus(QWidget):
 	  except IndexError:
 	      pass
         f_open.close()
+        
+        self.icon=QSystemTrayIcon(QIcon('/usr/share/icons/optimus.png'),self)
+        self.icon.isSystemTrayAvailable()
+        
+        menu = QMenu()
+        setting_menu = menu.addMenu('Setting')
+        enable_autostart = setting_menu.addAction('Enable Auto Start')
+        disable_autostart = setting_menu.addAction('Disable Auto Start')
+        aboutAction = menu.addAction('About')
+	exitAction = menu.addAction('Exit')
+	
+	self.icon.setContextMenu(menu)
+        self.icon.show()
+        self.icon.setVisible(True)
+        self.setWindowIcon(QIcon('/usr/share/icons/optimus.png'))
+        
         #widget
         lm = ListModel(self.list_data, self)
         self.lv = QListView()
         self.lv.setModel(lm)
 
-        remove = QPushButton("Remove Program",self)
-        add = QPushButton("Add Program",self)
+        remove = QPushButton('Remove Program',self)
+        add = QPushButton('Add Program',self)
+        Exit = QPushButton('Exit',self)
         # layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.lv) 
-        self.setLayout(layout)
-        #layout
-        button_layout=QVBoxLayout()
-        layout.addWidget(add)
-        layout.addWidget(remove)
-        self.setLayout(button_layout)
+        button_layout=QHBoxLayout()
+        button_layout.addStretch(1)
+        button_layout.addWidget(add)
+        button_layout.addWidget(remove)
+        button_layout.addWidget(Exit)
+        
+        view_layout = QVBoxLayout()
+        view_layout.addWidget(self.lv)
+        view_layout.addLayout(button_layout)
+        self.setLayout(view_layout)
         #action
         self.lv.doubleClicked.connect(self.run_program) #
         add.clicked.connect(self.add_program)
         remove.clicked.connect(self.remove_program)
-   
+        
+        self.icon.activated.connect(self.activate)
+        Exit.clicked.connect(QCoreApplication.instance().quit)
+    
+	exitAction.triggered.connect(qApp.quit)
+        aboutAction.triggered.connect(self.about_form)
+        enable_autostart.triggered.connect(self.enable_auto_start)
+	disable_autostart.triggered.connect(self.disable_auto_start)
+
+    def closeEvent(self, event):
+		  self.hide()
+		  event.ignore()
+
+    def activate(self,reason):
+            if reason==3:
+                self.show()
+                
     def run_program(self,item):
 	os.system('optirun '+str(item.data().toString())+' &') #call bumblebee
     
@@ -71,10 +109,10 @@ class Optimus(QWidget):
 	      f_write.close()
 	      
 	      if ok:
-		  QMessageBox.question(self,'Alert','Program was added',QMessageBox.Yes)
+		  QMessageBox.question(self,'Alert','Program was added',QMessageBox.Ok)
 	else:
 	      if ok:
-		  QMessageBox.question(self,'Alert','Program isn\'t installed',QMessageBox.Yes)
+		  QMessageBox.question(self,'Alert','Program isn\'t installed',QMessageBox.Ok)
 
     def remove_program(self):
 	text, ok = QInputDialog.getText(self, 'Remove Program','Enter Program:')
@@ -92,10 +130,28 @@ class Optimus(QWidget):
 	      f_write.close()
 	      
 	      if ok:
-		  QMessageBox.question(self,'Alert','Program was removed',QMessageBox.Yes)
+		  QMessageBox.question(self,'Alert','Program was removed',QMessageBox.Ok)
 	else:
 	      if ok:
-		  QMessageBox.question(self,'Alert','Error ......',QMessageBox.Yes)
+		  QMessageBox.question(self,'Alert','Error ......',QMessageBox.Ok)
+
+    def enable_auto_start(self):
+	    if not(os.path.exists('~/.config/autostart/bumblebee-optimus.desktop')):
+		os.system('cp /usr/share/applications/bumblebee-optimus.desktop ~/.config/autostart/')
+		QMessageBox.question(self,'Alert','Auto Start is enabled',QMessageBox.Ok)
+	    else:
+		QMessageBox.question(self,'Alert','Auto Start has been enabled',QMessageBox.Ok)
+    
+    def disable_auto_start(self):
+	    if os.path.exists('~/.config/autostart/bumblebee-optimus.desktop'):
+		os.system('rm ~/.config/autostart/bumblebee-optimus.desktop')
+		QMessageBox.question(self,'Alert','Auto Start is disabled',QMessageBox.Ok)
+	    else:
+		QMessageBox.question(self,'Alert','Auto Start has been disabled',QMessageBox.Ok)
+   
+    def about_form(self):
+	    data='<h3>Bumblebee Optimus</h3><br /><b>Author:</b><i>Peter Nguyen</i><br /><b>Version: testing</b>'
+	    QMessageBox.question(self,'About',data,QMessageBox.Ok)
 
 class ListModel(QAbstractListModel): 
     def __init__(self, datain, parent=None, *args): 
