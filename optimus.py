@@ -93,7 +93,11 @@ class Optimus(QWidget):
                 self.show()
                 
     def run_program(self,item):
-	os.system('optirun '+str(item.data().toString())+' &') #call bumblebee
+	if str(item.data().toString()) == 'nvidia-settings':
+	      prefix=' -c :8 &'
+	else:
+	      prefix=' &'
+	os.system('optirun '+str(item.data().toString())+prefix) #call bumblebee
     
     def add_program(self):
 	text, ok = QInputDialog.getText(self, 'Add Program','Enter New Program:')
@@ -180,6 +184,6 @@ if __name__ == "__main__":
     if not (os.path.exists(os.path.expanduser('~/.config/bumblebee_database'))):
 	   f_new = open(os.path.expanduser('~/.config/bumblebee_database'),'a')
 	   f_new.write('# Bumblebee Database \n')
-	   f_new.write('nvidia-settings -c :8 \n')
+	   f_new.write('nvidia-settings\n')
 	   f_new.close()
     main()
