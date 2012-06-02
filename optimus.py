@@ -12,9 +12,10 @@
 	---> Add system tray
 	---> Add Auto Start
 	---> Fix Bug
+	---> Fix Enable AutoStart
 	
     Author: PeterNguyen
-    Version : testing 3
+    Version : testing 4
 """
 
 import os
@@ -41,7 +42,7 @@ class Optimus(QWidget):
         self.icon.isSystemTrayAvailable()
         
         menu = QMenu()
-        setting_menu = menu.addMenu('Setting')
+        setting_menu = menu.addMenu('Settings')
         enable_autostart = setting_menu.addAction('Enable Auto Start')
         disable_autostart = setting_menu.addAction('Disable Auto Start')
         aboutAction = menu.addAction('About')
@@ -140,14 +141,14 @@ class Optimus(QWidget):
 		  QMessageBox.question(self,'Alert','Error ......',QMessageBox.Ok)
 
     def enable_auto_start(self):
-	    if not(os.path.exists('~/.config/autostart/bumblebee-optimus.desktop')):
+	    if not(os.path.exists(os.path.expanduser('~/.config/autostart/bumblebee-optimus.desktop'))):
 		os.system('cp /usr/share/applications/bumblebee-optimus.desktop ~/.config/autostart/')
 		QMessageBox.question(self,'Alert','Auto Start is enabled',QMessageBox.Ok)
 	    else:
 		QMessageBox.question(self,'Alert','Auto Start has been enabled',QMessageBox.Ok)
     
     def disable_auto_start(self):
-	    if os.path.exists('~/.config/autostart/bumblebee-optimus.desktop'):
+	    if os.path.exists(os.path.expanduser('~/.config/autostart/bumblebee-optimus.desktop')):
 		os.system('rm ~/.config/autostart/bumblebee-optimus.desktop')
 		QMessageBox.question(self,'Alert','Auto Start is disabled',QMessageBox.Ok)
 	    else:
