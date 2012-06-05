@@ -13,9 +13,13 @@
 	---> Add Auto Start
 	---> Fix Bug
 	---> Fix Enable AutoStart
-	
+    Change Log v0.1:
+	---> Update GUI
+	---> Update ,Fix Add / Remove Button
+	--->Fix Bug
+
     Author: PeterNguyen
-    Version : testing 4
+    Version : 0.1
 """
 
 import os
@@ -23,22 +27,28 @@ import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import * 
 
-class Optimus(QWidget): 
-    def __init__(self, *args): 
-        QWidget.__init__(self, *args) 
+##Define
+database_link='~/.config/bumblebee_database'
+icon_link='/usr/share/icons/optimus.png'
+autostart_link='~/.config/autostart/bumblebee-optimus.desktop'
 
-        # load program     
-        self.list_data=[]
-        f_open=open(os.path.expanduser('~/.config/bumblebee_database'),'r')
-        for line in f_open.read().split('\n'):
+def load_data():
+    list_data=[]
+    f_open=open(os.path.expanduser(database_link),'r')
+    for line in f_open.read().split('\n'):
 	  try:
 	    if line[0] != '#' and line !='':
-	      self.list_data.append(line)
+	      list_data.append(line)
 	  except IndexError:
 	      pass
-        f_open.close()
+    f_open.close()
+    return list_data
+
+class Optimus(QWidget): 
+    def __init__(self, *args): 
+        QWidget.__init__(self, *args)  
         
-        self.icon=QSystemTrayIcon(QIcon('/usr/share/icons/optimus.png'),self)
+        self.icon=QSystemTrayIcon(QIcon(icon_link),self)
         self.icon.isSystemTrayAvailable()
         
         menu = QMenu()
@@ -51,12 +61,13 @@ class Optimus(QWidget):
 	self.icon.setContextMenu(menu)
         self.icon.show()
         self.icon.setVisible(True)
-        self.setWindowIcon(QIcon('/usr/share/icons/optimus.png'))
+        self.setWindowIcon(QIcon(icon_link))
         
-        #widget
-        lm = ListModel(self.list_data, self)
-        self.lv = QListView()
-        self.lv.setModel(lm)
+        self.list_data=load_data()
+        
+        self.lv = QListWidget()
+        for item in self.list_data:
+	  self.lv.addItem(item)
 
         remove = QPushButton('Remove Program',self)
         add = QPushButton('Add Program',self)
@@ -73,7 +84,10 @@ class Optimus(QWidget):
         view_layout.addLayout(button_layout)
         self.setLayout(view_layout)
         #action
-        self.lv.doubleClicked.connect(self.run_program) #
+        self.item_choice=''
+        #
+        self.lv.doubleClicked.connect(self.run_program)
+        self.lv.itemActivated.connect(self.getItem)
         add.clicked.connect(self.add_program)
         remove.clicked.connect(self.remove_program)
         
@@ -105,72 +119,52 @@ class Optimus(QWidget):
 	if(os.path.exists('/usr/bin/'+str(text)) and self.list_data.count(str(text)) == 0):
 	      self.list_data.append(str(text))
 	      #update ListView
-	      lm=ListModel(self.list_data,self)
-	      self.lv.setModel(lm)
-	      
+	      self.lv.addItem(str(text))
 	      #write new item to database
-	      f_write=open(os.path.expanduser('~/.config/bumblebee_database'),'a')
+	      f_write=open(os.path.expanduser(database_link),'a')
 	      f_write.write(str(text)+'\n')
 	      f_write.close()
-	      
-	      if ok:
-		  QMessageBox.question(self,'Alert','Program was added',QMessageBox.Ok)
 	else:
 	      if ok:
 		  QMessageBox.question(self,'Alert','Program isn\'t installed',QMessageBox.Ok)
 
+    def getItem(self,item):
+	      self.item_choice=item.text()
+	      
     def remove_program(self):
-	text, ok = QInputDialog.getText(self, 'Remove Program','Enter Program:')
-	
-	if self.list_data.count(str(text)) == 1:
-	      self.list_data.remove(str(text))
-	      #update ListView
-	      lm=ListModel(self.list_data,self)
-	      self.lv.setModel(lm)
-	      
-	      #write database
-	      f_write=open(os.path.expanduser('~/.config/bumblebee_database'),'w')
-	      for line in self.list_data:
-		f_write.write(line+'\n')
-	      f_write.close()
-	      
-	      if ok:
-		  QMessageBox.question(self,'Alert','Program was removed',QMessageBox.Ok)
-	else:
-	      if ok:
-		  QMessageBox.question(self,'Alert','Error ......',QMessageBox.Ok)
+	      if(self.item_choice != ''):
+		  self.list_data.remove(self.item_choice)
+		  
+		  self.lv.clear()
+		  for item in self.list_data:
+		      self.lv.addItem(item)
+		  #update database
+		  write_change = open (os.path.expanduser(database_link),'w')
+		  
+		  for item in self.list_data:
+		      write_change.write(item+'\n')
+		      
+		  write_change.close()
+	      else:
+		   QMessageBox.question(self,'Alert','Error ! No Item Was Choosen',QMessageBox.Ok)
 
     def enable_auto_start(self):
-	    if not(os.path.exists(os.path.expanduser('~/.config/autostart/bumblebee-optimus.desktop'))):
+	    if not(os.path.exists(os.path.expanduser(autostart_link))):
 		os.system('cp /usr/share/applications/bumblebee-optimus.desktop ~/.config/autostart/')
 		QMessageBox.question(self,'Alert','Auto Start is enabled',QMessageBox.Ok)
 	    else:
 		QMessageBox.question(self,'Alert','Auto Start has been enabled',QMessageBox.Ok)
     
     def disable_auto_start(self):
-	    if os.path.exists(os.path.expanduser('~/.config/autostart/bumblebee-optimus.desktop')):
-		os.system('rm ~/.config/autostart/bumblebee-optimus.desktop')
+	    if os.path.exists(os.path.expanduser(autostart_link)):
+		os.system('rm '+autostart_link)
 		QMessageBox.question(self,'Alert','Auto Start is disabled',QMessageBox.Ok)
 	    else:
 		QMessageBox.question(self,'Alert','Auto Start has been disabled',QMessageBox.Ok)
    
     def about_form(self):
-	    data='<h3>Bumblebee Optimus</h3><br /><b>Author:</b><i>Peter Nguyen</i><br /><b>Version: testing</b>'
+	    data='<h3>Bumblebee Optimus</h3><br /><b>Author:</b><i>Peter Nguyen</i><br /><b>Version: 0.1</b>'
 	    QMessageBox.question(self,'About',data,QMessageBox.Ok)
-
-class ListModel(QAbstractListModel): 
-    def __init__(self, datain, parent=None, *args): 
-        QAbstractListModel.__init__(self, parent, *args) 
-        self.list_data = datain
- 
-    def rowCount(self, parent=QModelIndex()): 
-        return len(self.list_data) 
- 
-    def data(self, index, role): 
-        if index.isValid() and role == Qt.DisplayRole:
-            return QVariant(self.list_data[index.row()])
-        else: 
-            return QVariant()
 
 def main():
     
@@ -186,5 +180,17 @@ if __name__ == "__main__":
 	   f_new = open(os.path.expanduser('~/.config/bumblebee_database'),'a')
 	   f_new.write('# Bumblebee Database \n')
 	   f_new.write('nvidia-settings\n')
+	   if os.path.exists ('/usr/bin/vlc'):
+	      f_new.write('vlc\n')
+	   elif os.path.exists ('/usr/bin/firefox'):
+	      f_new.write('firefox\n')
+	   elif os.path.exists ('/usr/bin/chromium'):
+	      f_new.write('chromium')
+	   elif os.path.exists('/usr/bin/chromium-browser'): #for Fedora
+	      f_new.write('chromium-browser')
+	   elif os.path.exists('/usr/bin/totem'):
+	      f_new.write('totem')
+	   elif os.path.exists('/usr/bin/smplayer'):
+	      f_new.write('smplayer')
 	   f_new.close()
     main()
