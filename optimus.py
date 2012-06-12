@@ -242,4 +242,12 @@ def main():
     sys.exit(app.exec_()) 
 
 if __name__ == "__main__":
+    if not os.path.exists (database_link):
+	f_open = open(database_link,'w')
+	f_open.write('#Database')
+	f_open.close()
+    if not os.path.exists (setting_file):
+	f_open = open(setting_file,'w')
+	f_open.write('False')
+	f_open.close()
     main()
