@@ -18,7 +18,7 @@ if [ -f "/usr/bin/optirun" ]; then
 	sudo cp -Rv bumblebee-optimus.desktop.kde /usr/share/applications/bumblebee-optimus.desktop
     fi
     
-    if [ -f "/usr/bin/gtksu" ]; then
+    if [ -f "/usr/bin/gksu" ]; then
 	sudo cp -Rv bumblebee-optimus.desktop.gtk /usr/share/applications/bumblebee-optimus.desktop
     fi
     
