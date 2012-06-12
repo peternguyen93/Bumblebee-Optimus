@@ -7,6 +7,8 @@ if [ -f "/usr/bin/optimus" ]; then
     sudo rm -f /usr/bin/optimus
     sudo rm -f /usr/share/applications/bumblebee-optimus.desktop
     sudo rm -f /usr/share/icons/optimus.png
+    sudo rm -f /etc/bumblebee_database
+    sudo rm -f /etc/bumblebee_optimus_setting
     echo "Done."
 else
     echo "Optimus isn\'t installed"
