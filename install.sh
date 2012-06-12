@@ -10,9 +10,18 @@ if [ -f "/usr/bin/optirun" ]; then
     else
 	echo "Install bumblebee optimus....."
     fi
+
     sudo cp -Rv optimus.py /usr/bin/optimus
     sudo chmod o+x /usr/bin/optimus
-    sudo cp -Rv bumblebee-optimus.desktop /usr/share/applications/
+    
+    if [ -f "/usr/bin/kdesu" ]; then
+	sudo cp -Rv bumblebee-optimus.desktop.kde /usr/share/applications/bumblebee-optimus.desktop
+    fi
+    
+    if [ -f "/usr/bin/gtksu" ]; then
+	sudo cp -Rv bumblebee-optimus.desktop.gtk /usr/share/applications/bumblebee-optimus.desktop
+    fi
+    
     sudo cp -Rv optimus.png /usr/share/icons
     sleep 1
     echo "Done."
