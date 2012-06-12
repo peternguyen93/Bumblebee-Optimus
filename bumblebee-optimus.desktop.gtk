@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Bumblebee Optimus
+Comment=Bumblebee Optimus
+Exec=gtksu optimus
+Icon=nvidia-settings
+Categories=System;Settings; 
+X-Desktop-File-Install-Version=0.19
