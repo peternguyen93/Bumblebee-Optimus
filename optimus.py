@@ -4,37 +4,39 @@
     Bumblebee Optimus
 
     Help to run program with nvidia card easily 
-    
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.2 alpha'
+__author__  = 'v0.2 beta'
 
 import os
 import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import * 
-import string
+import re
 
 ##Define
-database_link='/etc/bumblebee_database'
+database_link='/etc/bumblebee/bumblebee_database'
 icon_link='/usr/share/icons/optimus.png'
 autostart_link='~/.config/autostart/bumblebee-optimus.desktop'
 __linkdefault__ = '/usr/share/applications/'
-setting_file = '/etc/bumblebee_optimus_setting'
 
+#Function 
+
+#load data from database
 def load_data():
     list_data=[]
     f_open=open(os.path.expanduser(database_link),'r')
     for line in f_open.read().split('\n'):
 	  try:
-	    if line[0] != '#' and line !='':
+	    if line[0] != '#' and line !='' and line[0]!='@':
 	      list_data.append(line)
 	  except IndexError:
 	      pass
     f_open.close()
     return list_data
 
+#change exec line to run with optirun
 def Edit_File(App_name):
   app = __linkdefault__+App_name+'.desktop'
   optimus_app = __linkdefault__+App_name+'.desktop.optimus'
@@ -57,7 +59,20 @@ def Edit_File(App_name):
 	data[num] = 'Exec = optirun '+App_name+' %U' 
     for line in data:
       f_open.write(line+'\n')
-    f_open.close()    
+    f_open.close()
+
+#update database when user changes mode
+def update_database(value):
+    f_open = open(database_link,'r')
+    data = f_open.read().split('\n')
+    f_open.close()
+
+    data[1] = value
+    
+    f_open = open(database_link,'w')
+    for i in range(len(data)):
+	f_open.write(data[i]+'\n')
+    f_open.close()
 
 class Optimus(QWidget): 
     def __init__(self, *args):
@@ -89,15 +104,22 @@ class Optimus(QWidget):
 	  
         self.remove = QPushButton('Remove Program',self)
         self.add = QPushButton('Add Program',self)
+        self.test_graphic = QPushButton('Test Card',self)
         self.Exit = QPushButton('Exit',self)
         self.radiobutton1 = QRadioButton('Enable Nvidia Mode')
-        self.radiobutton2 = QRadioButton('Disable Nvidia Mode')
+        self.radiobutton2 = QRadioButton('Enable OnBoard Mode')
         
-        f_open = open(setting_file,'r')
-        data=f_open.read().split('\n')[0]
-        f_open.close()
+        f_open = open(database_link,'r')
+	self.check = ''
+	for line in f_open.read().split('\n'):
+	    try:
+		_re = re.search(r'@(\w+)',line)
+		self.check = _re.group(1)
+	    except AttributeError:
+		pass
+	f_open.close()
         
-        if(data == 'False'):
+        if(self.check == 'False'):
 	    self.add.setEnabled(False)
 	    self.remove.setEnabled(False)
 	    self.lv.setVisible(False)
@@ -126,6 +148,7 @@ class Optimus(QWidget):
         view_layout.addWidget(QLabel('Bumblebee Option: ',self))
         view_layout.addLayout(mode)
         view_layout.addWidget(self.lv)
+        view_layout.addWidget(self.test_graphic)
         view_layout.addLayout(button_layout)
         self.setLayout(view_layout)
         
@@ -140,6 +163,7 @@ class Optimus(QWidget):
         self.lv.itemActivated.connect(self.getItem)
         self.add.clicked.connect(self.add_program)
         self.remove.clicked.connect(self.remove_program)
+        self.test_graphic.clicked.connect(self.Test_Card)
         
         self.icon.activated.connect(self.activate)
         self.Exit.clicked.connect(QCoreApplication.instance().quit)
@@ -156,6 +180,21 @@ class Optimus(QWidget):
     def activate(self,reason):
             if reason==3:
                 self.show()
+    
+    def Test_Card(self):
+	    
+	    if os.path.exists('/usr/bin/glxspheres'):
+		  glx_test = 'glxspheres'
+	    elif os.path.exists('/usr/bin/glxgears'):
+		  glx_test = 'glxgears'
+	    else:
+		  QMessageBox.question(self,'Error','<h1> Check Your Mesa Package To Use This Function </h1>',QMessageBox.Ok)
+		  system.exit(1)
+
+	    if self.check == 'True':
+		  os.system('optirun '+glx_test)
+	    else:
+		  os.system(glx_test)
     
     def add_program(self):
 	 fname = QFileDialog.getOpenFileName(self, 'Add Program',__linkdefault__)
@@ -200,18 +239,20 @@ class Optimus(QWidget):
     def Change_Nvidia_Mode(self):
 	      self.add.setEnabled(True)
 	      self.remove.setEnabled(True)
-	      f_open = open(setting_file,'w')
-	      f_open.write('True\n')
-	      f_open.close()
+	      
+	      update_database('@True')
+	      self.check = 'True'
+	      
 	      for app in self.list_data:
 		  os.system('cp '+__linkdefault__+app+'.desktop.optimus'+' '+__linkdefault__+app+'.desktop')
 
     def Change_Intel_Mode(self):
 	      self.add.setEnabled(False)
 	      self.remove.setEnabled(False)
-	      f_open = open(setting_file,'w')
-	      f_open.write('False\n')
-	      f_open.close()
+	      
+	      update_database('@False')
+	      self.check = 'False'
+	      
 	      for app in self.list_data:
 		  os.system('cp '+__linkdefault__+app+'.desktop.save'+' '+__linkdefault__+app+'.desktop')
 
@@ -237,17 +278,13 @@ def main():
     
     app = QApplication(sys.argv) 
     w = Optimus() 
-    w.setWindowTitle('Bumblebee Optimus')
+    w.setWindowTitle('Bumblebee Optimus Laucher')
     w.show() 
     sys.exit(app.exec_()) 
 
 if __name__ == "__main__":
     if not os.path.exists (database_link):
-	f_open = open(database_link,'w')
-	f_open.write('#Database')
-	f_open.close()
-    if not os.path.exists (setting_file):
-	f_open = open(setting_file,'w')
-	f_open.write('False')
+	f_open = open(database_link,'a')
+	f_open.write('#Database\n@False')
 	f_open.close()
     main()
