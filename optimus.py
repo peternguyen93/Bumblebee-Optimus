@@ -7,7 +7,7 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.2 beta'
+__author__  = 'v0.2 released'
 
 import os
 import sys
@@ -108,6 +108,7 @@ class Optimus(QWidget):
         self.Exit = QPushButton('Exit',self)
         self.radiobutton1 = QRadioButton('Enable Nvidia Mode')
         self.radiobutton2 = QRadioButton('Enable OnBoard Mode')
+        #self.radiobutton3 = QRadioButton('Enable Auto Mode')
         
         f_open = open(database_link,'r')
 	self.check = ''
@@ -125,18 +126,22 @@ class Optimus(QWidget):
 	    self.lv.setVisible(False)
 	    self.radiobutton1.setChecked(False)
 	    self.radiobutton2.setChecked(True)
-	else:
+	    #self.radiobutton3.setChecked(False)
+	elif (self.check == 'True'):
 	    self.lv.setVisible(True)
 	    self.add.setEnabled(True)
 	    self.remove.setEnabled(True)
 	    self.radiobutton1.setChecked(True)
 	    self.radiobutton2.setChecked(False)
-        
+	    #self.radiobutton3.setChecked(False)
+	#else:
+	    #self.radiobutton3.setChecked(True)
         #layout settings
         mode = QHBoxLayout()
         mode.addStretch(1)
         mode.addWidget(self.radiobutton1)
         mode.addWidget(self.radiobutton2)
+        #mode.addWidget(self.radiobutton3)
         
         button_layout=QHBoxLayout()
         button_layout.addStretch(1)
@@ -159,6 +164,7 @@ class Optimus(QWidget):
         
         self.radiobutton1.clicked.connect(self.Change_Nvidia_Mode)
         self.radiobutton2.clicked.connect(self.Change_Intel_Mode)
+        #self.radiobutton3.clicked.connect(self.Auto_Mode)
         
         self.lv.itemActivated.connect(self.getItem)
         self.add.clicked.connect(self.add_program)
@@ -255,6 +261,7 @@ class Optimus(QWidget):
 	      
 	      for app in self.list_data:
 		  os.system('cp '+__linkdefault__+app+'.desktop.save'+' '+__linkdefault__+app+'.desktop')
+		  
 
     def enable_auto_start(self):
 	    if not(os.path.exists(os.path.expanduser(autostart_link))):
@@ -285,6 +292,7 @@ def main():
 if __name__ == "__main__":
     if not os.path.exists (database_link):
 	f_open = open(database_link,'a')
-	f_open.write('#Database\n@False')
+	f_open.write('#Database\n@False\n')
+	f_open.write('nvidia-settings')
 	f_open.close()
     main()
