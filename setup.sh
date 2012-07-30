@@ -15,9 +15,31 @@ function setup(){
       sudo chmod o+x /usr/bin/optimus
     
       if [ -f "/usr/bin/kdesu" ]; then
-	  sudo cp -Rv bumblebee-optimus.desktop.kde /usr/share/applications/bumblebee-optimus.desktop #for KDE
+	  sudo cat > bumblebee_optimus.desktop << EOF
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Bumblebee Optimus
+Comment=Bumblebee Optimus
+Exec=kdesu optimus
+Icon=optimus.png
+Categories=System;Settings; 
+X-Desktop-File-Install-Version=0.19
+EOF
       elif [ -f "/usr/bin/gksu" ]; then
-	  sudo cp -Rv bumblebee-optimus.desktop.gtk /usr/share/applications/bumblebee-optimus.desktop #for Gnome
+	  sudo cat > bumblebee_optimus.desktop << EOF
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Bumblebee Optimus
+Comment=Bumblebee Optimus
+Exec=gksu optimus
+Icon=optimus.png
+Categories=System;Settings; 
+X-Desktop-File-Install-Version=0.19
+EOF
       fi
     
       sudo cp -Rv optimus.png /usr/share/icons
@@ -52,13 +74,20 @@ function remove(){
 echo "Checking bumblebee....."
 sleep 3
 if [ -f "/usr/bin/optirun" ]; then
-   echo "Bumblebee was installed"
+   echo "Bumblebee was installed."
    sleep 1
-   echo "#############################"
-   echo "1 - Setup Bumblebee Optimus Laucher"
+   if [ -f "/usr/bin/optimus" ]; then
+	echo "Bumblebee Optimus Laucher was installed."
+	menu="1 - Update Bumblebee Optimus Laucher"
+   else
+	menu="1 - Setup Bumblebee Optimus Laucher"
+   fi
+   sleep 1
+   echo "#####################################"
+   echo $menu
    echo "2 - Remove Bumblebee Optimus Laucher"
    echo "3 - Quit"
-   echo "#############################"
+   echo "#####################################"
    echo -n "Choices : "; read x
    case "$x" in
       "1" )
