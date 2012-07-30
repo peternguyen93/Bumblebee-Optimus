@@ -2,7 +2,7 @@ Bumblebee Optimus
 
 Support user to use optirun easily
 
-Version : v0.2b
+Version : v0.2a
 Author: Peter Nguyen
 
     Change Log:
@@ -26,6 +26,9 @@ Author: Peter Nguyen
 	---> Optimize Code : mode nvidia and intel
 	---> Add new button allow to test graphic card
 	---> Fix Bug
+    Change Log v0.2relase
+	---> Update Script Install
+	---> Add new function: auto change mode card
 
 # Install
 
