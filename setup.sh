@@ -3,7 +3,37 @@
 #Bumblebee Optimus Laucher Setup script
 #Peter Nguyen
 
-function setup(){
+kde="[Desktop Entry]\n
+Type=Application\n
+Encoding=UTF-8\n
+Name=Bumblebee Optimus\n
+Comment=Bumblebee Optimus\n
+Exec=kdesudo optimus\n
+Icon=/usr/share/icons/optimus.png\n
+Categories=System \n
+X-Desktop-File-Install-Version=0.19"
+
+gnome="[Desktop Entry]\n
+Type=Application\n
+Encoding=UTF-8\n
+Name=Bumblebee Optimus\n
+Comment=Bumblebee Optimus\n
+Exec=gksu optimus\n
+Icon=/usr/share/icons/optimus.png\n
+Categories=System\n
+X-Desktop-File-Install-Version=0.19"
+
+nvidia="[Desktop Entry]\n
+Name=nvidia-settings\n
+GenericName=Nvidia Settings\n
+Comment=Nvidia Settings\n
+Exec=nvidia-settings\n
+Icon=nvidia-current-settings.png\n
+Terminal=false\n
+Type=Application\n
+Categories=System"
+
+setup(){
 
       if [ -f "/usr/bin/optimus" ]; then
 	  echo "Update bumblebee optimus...."
@@ -12,42 +42,26 @@ function setup(){
       fi
 
       sudo cp -Rv optimus.py /usr/bin/optimus #install optimus
-      sudo chmod o+x /usr/bin/optimus
+      sudo chmod u+x /usr/bin/optimus
     
-      if [ -f "/usr/bin/kdesu" ]; then
-	  sudo cat > bumblebee_optimus.desktop << EOF
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=Bumblebee Optimus
-Comment=Bumblebee Optimus
-Exec=kdesu optimus
-Icon=optimus.png
-Categories=System;Settings; 
-X-Desktop-File-Install-Version=0.19
-EOF
+      if [ -f "/usr/bin/kdesudo" ]; then
+	  sudo echo -e $kde > /usr/share/applications/bumblebee_optimus.desktop
       elif [ -f "/usr/bin/gksu" ]; then
-	  sudo cat > bumblebee_optimus.desktop << EOF
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=Bumblebee Optimus
-Comment=Bumblebee Optimus
-Exec=gksu optimus
-Icon=optimus.png
-Categories=System;Settings; 
-X-Desktop-File-Install-Version=0.19
-EOF
+	  sudo echo -e $gnome > /usr/share/applications/bumblebee_optimus.desktop
       fi
-    
+      
       sudo cp -Rv optimus.png /usr/share/icons
+      
+      if [ -f "/usr/share/applications/nvidia-settings.desktop" ]; then
+	    echo "###"
+      else
+	    sudo echo -e $nvidia > /usr/share/applications/nvidia-settings.desktop
+      fi
       sleep 1
       echo "Done."
 }
 
-function remove(){
+remove(){
 
     echo "Checking optimus..."
     sleep 3
@@ -61,7 +75,6 @@ function remove(){
       sudo rm -f /usr/share/icons/optimus.png
       sudo rm -f /usr/share/applications/*.desktop.optimus
       sudo rm -f /etc/bumblebee_database
-      sudo rm -f /etc/bumblebee_optimus_setting
       echo "Done."
     else
       echo "Optimus isn\'t installed"
