@@ -7,7 +7,7 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.2 released'
+__author__  = 'v0.2.1 released'
 
 import os
 import sys
@@ -46,19 +46,21 @@ def Edit_File(App_name):
     
     f_open = open (app,'r')
     data = f_open.read().split('\n')
-    num=0
+    num = []
     for line in range(len(data)):
-      if data[line].split('=')[0].replace(' ','') == 'Exec':
-	num=line
+      if re.search(r'Exec',data[line].split('=')[0].replace(' ','')):
+	num.append(line)
     f_open.close()
     
     f_open = open (optimus_app,'w')
     if (App_name == 'nvidia-settings'):
-	data[num] = 'Exec = optirun '+App_name+' -c :8'
+	_exec_ = 'Exec = optirun '+App_name+' -c :8'
     else:
-	data[num] = 'Exec = optirun '+App_name+' %U' 
+	_exec_ = 'Exec = optirun '+App_name+' %U' 
+    for i in num:
+	data[i] = _exec_
     for line in data:
-      f_open.write(line+'\n')
+	 f_open.write(line+'\n')
     f_open.close()
 
 #update database when user changes mode
