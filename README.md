@@ -5,7 +5,7 @@ GUI for Bumblebee Optimus
 
 Bumblebee Optimus
 
-Support user to use optirun easily
+Hỗ trợ gọi các ứng dụng thông thường yêu cầu xử lý đồ họa , dễ dàng, tiện dụng
 
 Version : v0.2a
 Author: Peter Nguyen
