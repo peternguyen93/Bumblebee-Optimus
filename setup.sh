@@ -4,11 +4,20 @@
 #Peter Nguyen
 
 optimus="[Desktop Entry]\n
+Name=bumblebee-optimus\n
+GenericName=Bumblebee Optimus\n
+Comment=Bumblebee Optimus\n
+Exec=optimus
+Icon=nvidia-current-settings.png\n
+Terminal=false\n
+Type=Application\n
+Categories=System"
+
+nvidia="[Desktop Entry]\n
 Name=nvidia-settings\n
 GenericName=Nvidia Settings\n
 Comment=Nvidia Settings\n
 Exec=optirun nvidia-settings -c :8\n
-Exec=nvidia-settings\n
 Icon=nvidia-current-settings.png\n
 Terminal=false\n
 Type=Application\n
@@ -69,36 +78,39 @@ remove(){
 
 
 # Main Control
-echo "Checking bumblebee....."
-sleep 3
-if [ -f "/usr/bin/optirun" ]; then
-	echo "Bumblebee was installed."
-	sleep 1
-	if [ -f "/usr/bin/optimus" ]; then
-		echo "Bumblebee Optimus Laucher was installed."
-		menu="1 - Update Bumblebee Optimus Laucher"
+if [ $(id -u) == "0" ]; then
+	echo "Checking bumblebee....."
+	if [ -f "/usr/bin/optirun" ]; then
+		echo "Bumblebee was installed."
+		sleep 1
+		if [ -f "/usr/bin/optimus" ]; then
+			echo "Bumblebee Optimus Laucher was installed."
+			menu="1 - Update Bumblebee Optimus Laucher"
+		else
+			menu="1 - Setup Bumblebee Optimus Laucher"
+		fi
+		sleep 1
+		echo "#####################################"
+		echo $menu
+		echo "2 - Remove Bumblebee Optimus Laucher"
+		echo "3 - Quit"
+		echo "#####################################"
+		echo -n "Choices : "; read x
+		case "$x" in
+			"1" )
+				echo "Setup starting..."
+				setup
+				;;
+			"2" )
+				echo "Removing..."
+				remove
+				;;
+			"3" )   exit 0 ;;
+			* )     echo "Press 1 or 2 to choice options";;
+		esac
 	else
-		menu="1 - Setup Bumblebee Optimus Laucher"
+		echo "Bumblebee isn't installed. Please install now."
 	fi
-	sleep 1
-	echo "#####################################"
-	echo $menu
-	echo "2 - Remove Bumblebee Optimus Laucher"
-	echo "3 - Quit"
-	echo "#####################################"
-	echo -n "Choices : "; read x
-	case "$x" in
-		"1" )
-			echo "Setup starting..."
-			setup
-			;;
-		"2" )
-			echo "Removing..."
-			remove
-			;;
-		"3" )   exit 0 ;;
-		* )     echo "Press 1 or 2 to choice options";;
-	esac
 else
-	echo "Bumblebee isn't installed. Please install now."
+	echo "You must use root to execute this script!"
 fi
