@@ -8,7 +8,7 @@ Name=bumblebee-optimus\n
 GenericName=Bumblebee Optimus\n
 Comment=Bumblebee Optimus\n
 Exec=optimus
-Icon=nvidia-current-settings.png\n
+Icon=optimus.png\n
 Terminal=false\n
 Type=Application\n
 Categories=System"
@@ -35,8 +35,6 @@ setup(){
 	chgrp bumblebee /usr/bin/optimus
 	chgrp -R bumblebee /usr/share/applications #default link containts all application
 	chmod -R g+w /usr/share/applications
-	chgrp -R bumblebee /opt #other applications
-	chmod -R g+w /opt
 	chmod g+x /usr/bin/optimus
 	
 	echo -e $optimus > /usr/share/applications/bumblebee_optimus.desktop
@@ -68,8 +66,6 @@ remove(){
 		chgrp -R root /usr/share/applications
 		chown -R root /usr/share/applications
 		chmod -R g-w /usr/share/applications
-		chgrp -R root /opt 
-		chmod -R g-w /opt
 		rm -f /usr/share/icons/optimus.png
 		for line in $(cat /etc/bumblebee/bumblebee_database); do #remove all file
 			rm -f line".optimus"
