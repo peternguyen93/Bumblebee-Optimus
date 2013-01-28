@@ -7,7 +7,7 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.3.1 released'
+__author__  = 'v0.4 released'
 
 import os
 import sys
@@ -19,10 +19,9 @@ import re
 database_link='/etc/bumblebee/bumblebee_database'
 icon_link='/usr/share/icons/optimus.png'
 autostart_link='~/.config/autostart/bumblebee-optimus.desktop'
-__linkdefault__ = '/usr/share/applications/'
 
 #Function 
-
+basename = lambda file_name: file_name[file_name.rindex('/')+1:file_name.index('.')] 
 #load data from database
 def check_primus():#increate performance of nvidia card
 	if os.path.exists('/usr/bin/primusrun'):
@@ -44,9 +43,10 @@ def load_data(): #load data from data
 	return list_data
 
 #change exec line to run with optirun
-def Edit_File(App_name):
-	app = __linkdefault__+App_name+'.desktop'
-	optimus_app = __linkdefault__+App_name+'.desktop.optimus'
+#fix Edit_file
+def Edit_File(file_name):
+	app = file_name
+	optimus_app = file_name+'.optimus'
 	#__run__ = check_primus()
 	if os.path.exists (app):
 		os.system('cp '+app+' '+app+'.save')
@@ -61,10 +61,10 @@ def Edit_File(App_name):
 	f_open.close()
     
 	f_open = open (optimus_app,'w')
-	if (App_name == 'nvidia-settings'):
-		_exec_ = 'Exec=optirun '+App_name+' -c :8'
+	if (basename(file_name) == 'nvidia-settings'):
+		_exec_ = 'Exec=optirun '+basename(file_name)+' -c :8'
 	else:
-		_exec_ = 'Exec=optirun '+App_name+' %U'
+		_exec_ = 'Exec=optirun '+basename(file_name)+' %U'
 	for i in num:
 		data[i] = _exec_
 	for line in data:
@@ -86,9 +86,9 @@ def update_database(value):
 
 class Optimus(QWidget): 
 	def __init__(self, *args):
-	    super(Optimus,self,*args).__init__()
-	    self.item_choice=''
-	    self.SetupGui()
+		super(Optimus,self,*args).__init__()
+		self.item_choice=''
+		self.SetupGui()
 	    
 	def SetupGui(self):
 		self.icon=QSystemTrayIcon(QIcon(icon_link),self)
@@ -105,8 +105,8 @@ class Optimus(QWidget):
 		self.icon.show()
 		self.icon.setVisible(True)
 		self.setWindowIcon(QIcon(icon_link))
-		    
-		self.list_data=load_data()
+		
+		self.list_data=[basename(app) for app in load_data() if app != 'nvidia-settings']
 		    
 		self.lv = QListWidget()
 		for item in self.list_data:
@@ -210,25 +210,23 @@ class Optimus(QWidget):
 			os.system(glx_test)
 	
 	def add_program(self):
-		fname = QFileDialog.getOpenFileName(self, 'Add Program',__linkdefault__)
-		print fname
-		if str(fname):
-			app_name = str(fname).split('.')[0]
-			app_name = app_name.split('/')[4]
+		fname = str(QFileDialog.getOpenFileName(self, 'Add Program','/usr/share/applications/'))
+		if fname:
+			app_name = basename(fname) #basename
 			self.list_data.append(app_name)
 			#update ListView
 			self.lv.addItem(app_name)
 			#write new item to database
 			f_write=open(os.path.expanduser(database_link),'a')
-			f_write.write(app_name+'\n')
+			f_write.write(fname+'\n')
 			f_write.close()
 		  
-			Edit_File(app_name)
-			os.system('cp '+__linkdefault__+app_name+'.desktop.optimus'+' '+__linkdefault__+app_name+'.desktop')
+			Edit_File(fname)
+			os.system('cp %s.optimus %s' % (fname,fname))
 
 	def getItem(self,item):
 			self.item_choice=item.text()
-		  
+	#fix path app_name
 	def remove_program(self):
 		if(self.item_choice):
 			self.list_data.remove(self.item_choice)
@@ -236,39 +234,45 @@ class Optimus(QWidget):
 			self.lv.clear()
 			for item in self.list_data:
 				self.lv.addItem(item)
-			#update database
+			#sync database
+			d = [app for app in load_data() if app != 'nvidia-settings']
+			for i in range(len(d)):
+				if basename(d[i]) == self.item_choice:
+					diff = d[i]
+					break
+			d.remove(diff)
 			write_change = open (os.path.expanduser(database_link),'w')
-			
-			for item in self.list_data:
+			for item in d:
 				write_change.write(item+'\n')
-			    
 			write_change.close()
 			
-			os.remove(__linkdefault__+self.item_choice+'.desktop')
-			os.system('mv '+__linkdefault__+str(self.item_choice)+'.desktop.save'+' '+__linkdefault__+str(self.item_choice)+'.desktop')
-			os.remove(__linkdefault__+self.item_choice+'.desktop.optimus')
+			os.remove(diff)
+			os.system('mv '+diff+'.save'+' '+diff)
+			os.remove(diff+'.optimus')
 		else:
 			QMessageBox.question(self,'Alert','Error ! No Item Was Choosen',QMessageBox.Ok)
-
+	#fix path
 	def Change_Nvidia_Mode(self):
 		self.add.setEnabled(True)
 		self.remove.setEnabled(True)
 		  
 		update_database('@True')
 		self.check = 'True'
-		  
-		for app in self.list_data:
-			os.system('cp '+__linkdefault__+app+'.desktop.optimus'+' '+__linkdefault__+app+'.desktop')
-
+		#load data from database
+		d = [app for app in load_data() if app != 'nvidia-settings']
+		for app in d:
+			os.system('cp '+app+'.optimus '+app)
+	#fix path
 	def Change_Intel_Mode(self):
 		self.add.setEnabled(False)
 		self.remove.setEnabled(False)
 		  
 		update_database('@False')
 		self.check = 'False'
-		  
-		for app in self.list_data:
-			os.system('cp '+__linkdefault__+app+'.desktop.save'+' '+__linkdefault__+app+'.desktop')
+		#load data from database
+		d = [app for app in load_data() if app != 'nvidia-settings']
+		for app in d:
+			os.system('cp '+app+'.save '+app)
 
 	def enable_auto_start(self):
 		if not(os.path.exists(os.path.expanduser(autostart_link))):
