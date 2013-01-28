@@ -7,13 +7,14 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.4 released'
+__author__  = 'v0.4.1 released'
 
 import os
 import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import * 
 import re
+import subprocess
 
 ##Define
 database_link='/etc/bumblebee/bumblebee_database'
@@ -71,18 +72,12 @@ def Edit_File(file_name):
 		f_open.write(line+'\n')
 	f_open.close()
 
-#update database when user changes mode
-def update_database(value):
-	f_open = open(database_link,'r')
-	data = f_open.read().split('\n')
-	f_open.close()
-
-	data[1] = value
-	
-	f_open = open(database_link,'w')
-	for i in range(len(data)):
-		f_open.write(data[i]+'\n')
-	f_open.close()
+def update_database(value,data):
+	data[1] = value #default line mode
+	fw = fopen(database_link,'w')
+	for line in data:
+		fw.write(line+'\n')
+	fw.close()
 
 class Optimus(QWidget): 
 	def __init__(self, *args):
@@ -241,6 +236,10 @@ class Optimus(QWidget):
 					diff = d[i]
 					break
 			d.remove(diff)
+			d.append('nvidia-settings')
+			d.append('@True')
+			d.append('#Database')
+			d.reverse()
 			write_change = open (os.path.expanduser(database_link),'w')
 			for item in d:
 				write_change.write(item+'\n')
@@ -256,21 +255,21 @@ class Optimus(QWidget):
 		self.add.setEnabled(True)
 		self.remove.setEnabled(True)
 		  
-		update_database('@True')
 		self.check = 'True'
 		#load data from database
 		d = [app for app in load_data() if app != 'nvidia-settings']
+		update_database('@True',d.append('nvidia-settings'))
 		for app in d:
 			os.system('cp '+app+'.optimus '+app)
 	#fix path
 	def Change_Intel_Mode(self):
 		self.add.setEnabled(False)
 		self.remove.setEnabled(False)
-		  
-		update_database('@False')
+		
 		self.check = 'False'
 		#load data from database
 		d = [app for app in load_data() if app != 'nvidia-settings']
+		update_database('@False',d.append('nvidia-settings'))
 		for app in d:
 			os.system('cp '+app+'.save '+app)
 
