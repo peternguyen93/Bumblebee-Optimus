@@ -33,8 +33,10 @@ setup(){
 
 	cp -Rv optimus.py /usr/bin/optimus #install optimus
 	chgrp bumblebee /usr/bin/optimus
-	chgrp -R bumblebee /usr/share/applications
+	chgrp -R bumblebee /usr/share/applications #default link containts all application
 	chmod -R g+w /usr/share/applications
+	chgrp -R bumblebee /opt #other applications
+	chmod -R g+w /opt
 	chmod g+x /usr/bin/optimus
 	
 	echo -e $optimus > /usr/share/applications/bumblebee_optimus.desktop
@@ -56,7 +58,6 @@ setup(){
 
 remove(){
 	echo "Checking optimus..."
-	sleep 3
 	if [ -f "/usr/bin/optimus" ]; then
 		echo "Removing......"
 		rm -f /usr/bin/optimus 
@@ -67,8 +68,12 @@ remove(){
 		chgrp -R root /usr/share/applications
 		chown -R root /usr/share/applications
 		chmod -R g-w /usr/share/applications
+		chgrp -R root /opt 
+		chmod -R g-w /opt
 		rm -f /usr/share/icons/optimus.png
-		rm -f /usr/share/applications/*.desktop.optimus
+		for line in $(cat /etc/bumblebee/bumblebee_database); do #remove all file
+			rm -f line".optimus"
+		done
 		rm -f /etc/bumblebee/bumblebee_database
 		echo "Done."
 	else
