@@ -7,7 +7,7 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.4.1 released'
+__author__  = 'v0.4.2 released'
 
 import os
 import sys
@@ -73,9 +73,10 @@ def Edit_File(file_name):
 	f_open.close()
 
 def update_database(value,data):
-	data[1] = value #default line mode
-	fw = fopen(database_link,'w')
-	for line in data:
+	outfile = [value]
+	outfile.extend(data)
+	fw = open(database_link,'w')
+	for line in outfile:
 		fw.write(line+'\n')
 	fw.close()
 
@@ -258,9 +259,10 @@ class Optimus(QWidget):
 		self.check = 'True'
 		#load data from database
 		d = [app for app in load_data() if app != 'nvidia-settings']
-		update_database('@True',d.append('nvidia-settings'))
 		for app in d:
 			os.system('cp '+app+'.optimus '+app)
+		d.append('nvidia-settings')
+		update_database('@True',d)
 	#fix path
 	def Change_Intel_Mode(self):
 		self.add.setEnabled(False)
@@ -269,21 +271,22 @@ class Optimus(QWidget):
 		self.check = 'False'
 		#load data from database
 		d = [app for app in load_data() if app != 'nvidia-settings']
-		update_database('@False',d.append('nvidia-settings'))
 		for app in d:
 			os.system('cp '+app+'.save '+app)
+		d.append('nvidia-settings')
+		update_database('@False',d)
 
 	def enable_auto_start(self):
 		if not(os.path.exists(os.path.expanduser(autostart_link))):
 			os.system('cp /usr/share/applications/bumblebee-optimus.desktop ~/.config/autostart/')
-			QMessageBox.question(self,'Alert','Auto Start is enabled',QMessageBox.Ok)
+			QMessageBox.question(self,'Alert','Auto Start was enabled',QMessageBox.Ok)
 		else:
 			QMessageBox.question(self,'Alert','Auto Start has been enabled',QMessageBox.Ok)
 	
 	def disable_auto_start(self):
 		if os.path.exists(os.path.expanduser(autostart_link)):
 			os.remove(autostart_link)
-			QMessageBox.question(self,'Alert','Auto Start is disabled',QMessageBox.Ok)
+			QMessageBox.question(self,'Alert','Auto Start was disabled',QMessageBox.Ok)
 		else:
 			QMessageBox.question(self,'Alert','Auto Start has been disabled',QMessageBox.Ok)
       
