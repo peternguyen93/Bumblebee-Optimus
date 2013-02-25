@@ -7,78 +7,72 @@
 """
 
 __version__ = 'Peter Nguyen'
-__author__  = 'v0.4.2 released'
+__author__  = 'v0.5 released'
 
 import os
 import sys
 from PyQt4.QtCore import * 
 from PyQt4.QtGui import * 
 import re
-import subprocess
+from subprocess import call
 
-##Define
 database_link='/etc/bumblebee/bumblebee_database'
 icon_link='/usr/share/icons/optimus.png'
 autostart_link='~/.config/autostart/bumblebee-optimus.desktop'
-
 #Function 
 basename = lambda file_name: file_name[file_name.rindex('/')+1:file_name.index('.')] 
 #load data from database
-def check_primus():#increate performance of nvidia card
-	if os.path.exists('/usr/bin/primusrun'):
-		return 'primusrun'
-	else:
-		return 'optirun'
-
-def load_data(): #load data from data
-	black_list = ['','@','#']
-	list_data=[]
-	f_open=open(os.path.expanduser(database_link),'r')
-	for line in f_open.read().split('\n'):
-		try:
-			if line[0] not in black_list:
-				list_data.append(line)
-		except IndexError:
-			pass
-	f_open.close()
-	return list_data
-
-#change exec line to run with optirun
-#fix Edit_file
-def Edit_File(file_name):
-	app = file_name
-	optimus_app = file_name+'.optimus'
-	#__run__ = check_primus()
-	if os.path.exists (app):
-		os.system('cp '+app+' '+app+'.save')
-		os.system('cp '+app+' '+optimus_app)    
+class optimus_function:
+	def __init__(self):
+		pass #do nothing
+	def load_data(self): #load data from data
+		black_list = ['','@','#']
+		list_data=[]
+		f_open=open(os.path.expanduser(database_link),'r')
+		for line in f_open.read().split('\n'):
+			try:
+				if line[0] not in black_list:
+					list_data.append(line)
+			except IndexError:
+				pass
+		f_open.close()
+		return list_data
+	#change exec line to run with optirun
+	#fix Edit_file
+	def edit_file(self,file_name):
+		app = file_name
+		optimus_app = file_name+'.optimus'
+		#__run__ = check_primus()
+		if os.path.exists (app):
+			call(['cp',app,app+'.save'])
+			call(['cp',app,optimus_app])
+	    
+		f_open = open (app,'r')
+		data = f_open.read().split('\n')
+		num = []
+		for line in range(len(data)):
+			if re.search(r'Exec',data[line].split('=')[0].replace(' ','')):
+				num.append(line)
+		f_open.close()
     
-	f_open = open (app,'r')
-	data = f_open.read().split('\n')
-	num = []
-	for line in range(len(data)):
-		if re.search(r'Exec',data[line].split('=')[0].replace(' ','')):
-			num.append(line)
-	f_open.close()
-    
-	f_open = open (optimus_app,'w')
-	if (basename(file_name) == 'nvidia-settings'):
-		_exec_ = 'Exec=optirun '+basename(file_name)+' -c :8'
-	else:
-		_exec_ = 'Exec=optirun '+basename(file_name)+' %U'
-	for i in num:
-		data[i] = _exec_
-	for line in data:
-		f_open.write(line+'\n')
-	f_open.close()
+		f_open = open (optimus_app,'w')
+		if (basename(file_name) == 'nvidia-settings'):
+			_exec_ = 'Exec=optirun '+basename(file_name)+' -c :8'
+		else:
+			_exec_ = 'Exec=optirun '+basename(file_name)+' %U'
+		for i in num:
+			data[i] = _exec_
+		for line in data:
+			f_open.write(line+'\n')
+		f_open.close()
 
-def update_database(value,data):
-	outfile = [value]
-	outfile.extend(data)
-	fw = open(database_link,'w')
-	for line in outfile:
-		fw.write(line+'\n')
-	fw.close()
+	def update_database(self,value,data):
+		outfile = [value]
+		outfile.extend(data)
+		fw = open(database_link,'w')
+		for line in outfile:
+			fw.write(line+'\n')
+		fw.close()
 
 class Optimus(QWidget): 
 	def __init__(self, *args):
@@ -102,7 +96,7 @@ class Optimus(QWidget):
 		self.icon.setVisible(True)
 		self.setWindowIcon(QIcon(icon_link))
 		
-		self.list_data=[basename(app) for app in load_data() if app != 'nvidia-settings']
+		self.list_data=[basename(app) for app in optimus_function().load_data() if app != 'nvidia-settings']
 		    
 		self.lv = QListWidget()
 		for item in self.list_data:
@@ -110,10 +104,10 @@ class Optimus(QWidget):
 	      
 		self.remove = QPushButton('Remove Program',self)
 		self.add = QPushButton('Add Program',self)
-		self.test_graphic = QPushButton('Test Card',self)
+		self.test_graphic = QPushButton('Test Video Card',self)
 		self.Exit = QPushButton('Exit',self)
-		self.radiobutton1 = QRadioButton('Enable Nvidia Mode')
-		self.radiobutton2 = QRadioButton('Enable OnBoard Mode')
+		self.radiobutton1 = QRadioButton('Nvidia Mode')
+		self.radiobutton2 = QRadioButton('OnBoard Mode')
 		#self.radiobutton3 = QRadioButton('Enable Auto Mode')
 		
 		f_open = open(database_link,'r')
@@ -190,6 +184,8 @@ class Optimus(QWidget):
 	def activate(self,reason):
 		if reason==3:
 			self.show()
+	def getItem(self,item):
+			self.item_choice=item.text()
 	
 	def Test_Card(self):
 		if os.path.exists('/usr/bin/glxspheres'):
@@ -201,9 +197,34 @@ class Optimus(QWidget):
 			system.exit(1)
 
 		if self.check == 'True':
-			os.system('optirun '+glx_test)
+			call(['optirun',glx_test])
 		else:
-			os.system(glx_test)
+			call([glx_test])
+	
+	#fix path
+	def Change_Nvidia_Mode(self):
+		self.add.setEnabled(True)
+		self.remove.setEnabled(True)
+		  
+		self.check = 'True'
+		#load data from database
+		d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
+		for app in d:
+			call(['cp',app+'.optimus',app])
+		d.append('nvidia-settings')
+		optimus_function().update_database('@True',d)
+	#fix path
+	def Change_Intel_Mode(self):
+		self.add.setEnabled(False)
+		self.remove.setEnabled(False)
+		
+		self.check = 'False'
+		#load data from database
+		d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
+		for app in d:
+			call(['cp',app+'.save',app])
+		d.append('nvidia-settings')
+		optimus_function().update_database('@False',d)
 	
 	def add_program(self):
 		fname = str(QFileDialog.getOpenFileName(self, 'Add Program','/usr/share/applications/'))
@@ -217,11 +238,9 @@ class Optimus(QWidget):
 			f_write.write(fname+'\n')
 			f_write.close()
 		  
-			Edit_File(fname)
+			optimus_function().edit_file(fname)
 			os.system('cp %s.optimus %s' % (fname,fname))
 
-	def getItem(self,item):
-			self.item_choice=item.text()
 	#fix path app_name
 	def remove_program(self):
 		if(self.item_choice):
@@ -231,7 +250,7 @@ class Optimus(QWidget):
 			for item in self.list_data:
 				self.lv.addItem(item)
 			#sync database
-			d = [app for app in load_data() if app != 'nvidia-settings']
+			d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
 			for i in range(len(d)):
 				if basename(d[i]) == self.item_choice:
 					diff = d[i]
@@ -247,35 +266,11 @@ class Optimus(QWidget):
 			write_change.close()
 			
 			os.remove(diff)
-			os.system('mv '+diff+'.save'+' '+diff)
+			call(['mv',diff+'.save',diff])
 			os.remove(diff+'.optimus')
 		else:
 			QMessageBox.question(self,'Alert','Error ! No Item Was Choosen',QMessageBox.Ok)
-	#fix path
-	def Change_Nvidia_Mode(self):
-		self.add.setEnabled(True)
-		self.remove.setEnabled(True)
-		  
-		self.check = 'True'
-		#load data from database
-		d = [app for app in load_data() if app != 'nvidia-settings']
-		for app in d:
-			os.system('cp '+app+'.optimus '+app)
-		d.append('nvidia-settings')
-		update_database('@True',d)
-	#fix path
-	def Change_Intel_Mode(self):
-		self.add.setEnabled(False)
-		self.remove.setEnabled(False)
-		
-		self.check = 'False'
-		#load data from database
-		d = [app for app in load_data() if app != 'nvidia-settings']
-		for app in d:
-			os.system('cp '+app+'.save '+app)
-		d.append('nvidia-settings')
-		update_database('@False',d)
-
+	#other function
 	def enable_auto_start(self):
 		if not(os.path.exists(os.path.expanduser(autostart_link))):
 			os.system('cp /usr/share/applications/bumblebee-optimus.desktop ~/.config/autostart/')
