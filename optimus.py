@@ -6,8 +6,8 @@
     Help to run program with nvidia card easily 
 """
 
-__version__ = 'Peter Nguyen'
-__author__  = 'v0.5 released'
+__author__ = 'Peter Nguyen'
+__version__  = 'v0.6 released'
 
 import os
 import sys
@@ -23,18 +23,15 @@ autostart_link='~/.config/autostart/bumblebee-optimus.desktop'
 basename = lambda file_name: file_name[file_name.rindex('/')+1:file_name.index('.')] 
 #load data from database
 class optimus_function:
-	def __init__(self):
-		pass #do nothing
 	def load_data(self): #load data from data
 		black_list = ['','@','#']
 		list_data=[]
-		f_open=open(os.path.expanduser(database_link),'r')
+		
+		f_open=open(database_link,'r')
 		for line in f_open.read().split('\n'):
-			try:
-				if line[0] not in black_list:
+			if(line != ''):
+				if(line[0] not in black_list):
 					list_data.append(line)
-			except IndexError:
-				pass
 		f_open.close()
 		return list_data
 	#change exec line to run with optirun
@@ -88,6 +85,8 @@ class Optimus(QWidget):
 		setting_menu = menu.addMenu('Settings')
 		enable_autostart = setting_menu.addAction('Enable Auto Start')
 		disable_autostart = setting_menu.addAction('Disable Auto Start')
+		nvidia_mode = menu.addAction('Nvidia Mode')
+		onboard_mode = menu.addAction('Onboard Mode')
 		aboutAction = menu.addAction('About')
 		exitAction = menu.addAction('Exit')
 		
@@ -96,8 +95,7 @@ class Optimus(QWidget):
 		self.icon.setVisible(True)
 		self.setWindowIcon(QIcon(icon_link))
 		
-		self.list_data=[basename(app) for app in optimus_function().load_data() if app != 'nvidia-settings']
-		    
+		self.list_data = [basename(app) for app in optimus_function().load_data() if app != 'nvidia-settings']
 		self.lv = QListWidget()
 		for item in self.list_data:
 			self.lv.addItem(item)
@@ -138,7 +136,6 @@ class Optimus(QWidget):
 			#self.radiobutton3.setChecked(True)
 		#layout settings
 		mode = QHBoxLayout()
-		mode.addStretch(1)
 		mode.addWidget(self.radiobutton1)
 		mode.addWidget(self.radiobutton2)
 		#mode.addWidget(self.radiobutton3)
@@ -176,6 +173,8 @@ class Optimus(QWidget):
 		aboutAction.triggered.connect(self.about_form)
 		enable_autostart.triggered.connect(self.enable_auto_start)
 		disable_autostart.triggered.connect(self.disable_auto_start)
+		nvidia_mode.triggered.connect(self.Change_Nvidia_Mode)
+		onboard_mode.triggered.connect(self.Change_Intel_Mode)
 	    
 	def closeEvent(self, event):
 		self.hide()
@@ -195,7 +194,6 @@ class Optimus(QWidget):
 		else:
 			QMessageBox.question(self,'Error','<h1> Check Your Mesa Package To Use This Function </h1>',QMessageBox.Ok)
 			system.exit(1)
-
 		if self.check == 'True':
 			call(['optirun',glx_test])
 		else:
@@ -213,6 +211,8 @@ class Optimus(QWidget):
 			call(['cp',app+'.optimus',app])
 		d.append('nvidia-settings')
 		optimus_function().update_database('@True',d)
+		self.radiobutton1.setChecked(True)
+		self.radiobutton2.setChecked(False)
 	#fix path
 	def Change_Intel_Mode(self):
 		self.add.setEnabled(False)
@@ -225,6 +225,8 @@ class Optimus(QWidget):
 			call(['cp',app+'.save',app])
 		d.append('nvidia-settings')
 		optimus_function().update_database('@False',d)
+		self.radiobutton1.setChecked(False)
+		self.radiobutton2.setChecked(True)
 	
 	def add_program(self):
 		fname = str(QFileDialog.getOpenFileName(self, 'Add Program','/usr/share/applications/'))
