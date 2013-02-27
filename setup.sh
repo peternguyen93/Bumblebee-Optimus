@@ -34,7 +34,7 @@ setup(){
 	cp -Rv optimus.py /usr/bin/optimus #install optimus
 	chgrp bumblebee /usr/bin/optimus
 	chgrp -R bumblebee /usr/share/applications #default link containts all application
-	chmod -R g+w /usr/share/applications
+	chmod -R g+r+w /usr/share/applications
 	chmod g+x /usr/bin/optimus
 	
 	echo -e $optimus > /usr/share/applications/bumblebee_optimus.desktop
@@ -44,10 +44,10 @@ setup(){
 	echo -e $nvidia > /usr/share/applications/nvidia-settings.desktop
 	
 	if [ ! -f "/etc/bumblebee/bumblebee_database" ]; then
-		echo -e "#Database\n@False\nnvidia-settings" > /etc/bumblebee/bumblebee_database
+		echo -e "#Database\n@False\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
 	fi
 	chgrp bumblebee /etc/bumblebee/bumblebee_database
-	chmod 760 /etc/bumblebee/bumblebee_database
+	chmod g+wr /etc/bumblebee/bumblebee_database
 	
 	sleep 1
 	echo "Done."
@@ -79,7 +79,7 @@ remove(){
 
 
 # Main Control
-if [ $(id -u) == "0" ]; then
+if [ $(id -u) == 0 ]; then
 	echo "Checking bumblebee....."
 	if [ -f "/usr/bin/optirun" ]; then
 		echo "Bumblebee was installed."
