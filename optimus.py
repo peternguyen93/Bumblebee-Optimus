@@ -7,7 +7,7 @@
 """
 
 __author__ = 'Peter Nguyen'
-__version__  = 'v0.6 released'
+__version__  = 'v0.6.1 released'
 
 import os
 import sys
@@ -24,16 +24,18 @@ basename = lambda file_name: file_name[file_name.rindex('/')+1:file_name.index('
 #load data from database
 class optimus_function:
 	def load_data(self): #load data from data
-		black_list = ['','@','#']
+		black_list = ['@','#']
 		list_data=[]
-		
+		option = ''
 		f_open=open(database_link,'r')
 		for line in f_open.read().split('\n'):
 			if(line != ''):
 				if(line[0] not in black_list):
 					list_data.append(line)
+				elif(line[0]=='@'):
+					option = line
 		f_open.close()
-		return list_data
+		return (option[1:],list_data)
 	#change exec line to run with optirun
 	#fix Edit_file
 	def edit_file(self,file_name):
@@ -64,8 +66,11 @@ class optimus_function:
 		f_open.close()
 
 	def update_database(self,value,data):
-		outfile = [value]
+		outfile = []
+		if(value != None):
+			outfile.append(value)
 		outfile.extend(data)
+		outfile.append('#nvidia-settings')
 		fw = open(database_link,'w')
 		for line in outfile:
 			fw.write(line+'\n')
@@ -95,10 +100,12 @@ class Optimus(QWidget):
 		self.icon.setVisible(True)
 		self.setWindowIcon(QIcon(icon_link))
 		
-		self.list_data = [basename(app) for app in optimus_function().load_data() if app != 'nvidia-settings']
+		db = optimus_function().load_data()
+		self.list_data = db[1]
 		self.lv = QListWidget()
-		for item in self.list_data:
-			self.lv.addItem(item)
+		if(self.list_data):
+			for item in self.list_data:
+				self.lv.addItem(basename(item))
 	      
 		self.remove = QPushButton('Remove Program',self)
 		self.add = QPushButton('Add Program',self)
@@ -108,15 +115,7 @@ class Optimus(QWidget):
 		self.radiobutton2 = QRadioButton('OnBoard Mode')
 		#self.radiobutton3 = QRadioButton('Enable Auto Mode')
 		
-		f_open = open(database_link,'r')
-		self.check = ''
-		for line in f_open.read().split('\n'):
-			try:
-				_re = re.search(r'@(\w+)',line)
-				self.check = _re.group(1)
-			except AttributeError:
-				pass
-		f_open.close()
+		self.check = db[0]
 	    
 		if(self.check == 'False'):
 			self.add.setEnabled(False)
@@ -183,6 +182,7 @@ class Optimus(QWidget):
 	def activate(self,reason):
 		if reason==3:
 			self.show()
+
 	def getItem(self,item):
 			self.item_choice=item.text()
 	
@@ -206,11 +206,9 @@ class Optimus(QWidget):
 		  
 		self.check = 'True'
 		#load data from database
-		d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
-		for app in d:
+		for app in self.list_data:
 			call(['cp',app+'.optimus',app])
-		d.append('nvidia-settings')
-		optimus_function().update_database('@True',d)
+		optimus_function().update_database('@True',self.list_data)
 		self.radiobutton1.setChecked(True)
 		self.radiobutton2.setChecked(False)
 	#fix path
@@ -220,56 +218,44 @@ class Optimus(QWidget):
 		
 		self.check = 'False'
 		#load data from database
-		d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
-		for app in d:
+		for app in self.list_data:
 			call(['cp',app+'.save',app])
-		d.append('nvidia-settings')
-		optimus_function().update_database('@False',d)
+		optimus_function().update_database('@False',self.list_data)
 		self.radiobutton1.setChecked(False)
 		self.radiobutton2.setChecked(True)
 	
 	def add_program(self):
 		fname = str(QFileDialog.getOpenFileName(self, 'Add Program','/usr/share/applications/'))
-		if fname:
-			app_name = basename(fname) #basename
-			self.list_data.append(app_name)
-			#update ListView
-			self.lv.addItem(app_name)
-			#write new item to database
-			f_write=open(os.path.expanduser(database_link),'a')
-			f_write.write(fname+'\n')
-			f_write.close()
-		  
-			optimus_function().edit_file(fname)
-			os.system('cp %s.optimus %s' % (fname,fname))
+		if (fname):
+			if (os.path.exists(fname)):
+				app_name = basename(fname) #basename
+				self.list_data.append(fname)
+				#update ListView
+				self.lv.addItem(app_name)
+				#write new item to database
+				optimus_function().update_database('@True',self.list_data)
+				optimus_function().edit_file(fname)
+				os.system('cp %s.optimus %s' % (fname,fname))
+			else:
+				QMessageBox.question(self,'Alert','Error ! App doesn\'t exists',QMessageBox.Ok)
 
 	#fix path app_name
 	def remove_program(self):
 		if(self.item_choice):
-			self.list_data.remove(self.item_choice)
-			
-			self.lv.clear()
-			for item in self.list_data:
-				self.lv.addItem(item)
-			#sync database
-			d = [app for app in optimus_function().load_data() if app != 'nvidia-settings']
-			for i in range(len(d)):
-				if basename(d[i]) == self.item_choice:
-					diff = d[i]
+			for i in xrange(len(self.list_data)):
+				if basename(self.list_data[i]) == self.item_choice:
+					diff = self.list_data[i]
+					self.list_data.remove(self.list_data[i])
 					break
-			d.remove(diff)
-			d.append('nvidia-settings')
-			d.append('@True')
-			d.append('#Database')
-			d.reverse()
-			write_change = open (os.path.expanduser(database_link),'w')
-			for item in d:
-				write_change.write(item+'\n')
-			write_change.close()
-			
-			os.remove(diff)
-			call(['mv',diff+'.save',diff])
-			os.remove(diff+'.optimus')
+			#update ListWidget
+			self.lv.clear()
+			for app in self.list_data:
+				self.lv.addItem(basename(app))
+			optimus_function().update_database('@True',self.list_data)
+			if(os.path.exists(diff+'.save') and os.path.exists(diff+'.optimus')):
+				os.remove(diff)
+				call(['mv',diff+'.save',diff])
+				os.remove(diff+'.optimus')
 		else:
 			QMessageBox.question(self,'Alert','Error ! No Item Was Choosen',QMessageBox.Ok)
 	#other function
@@ -301,6 +287,6 @@ def main():
 if __name__ == "__main__":
 	if not os.path.exists (database_link):
 		f_open = open(database_link,'a')
-		f_open.write('#Database\n@False\n')
+		f_open.write('#Database\n@False\n#nvidia-settings\n')
 		f_open.close()
 	main()
