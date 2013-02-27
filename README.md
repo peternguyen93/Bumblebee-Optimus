@@ -1,7 +1,7 @@
 Bumblebee-Optimus
 =================
 Bumblebee-Optimus
-- Version: 0.6 release
+- Version: 0.6.1 release
 - Author: PeterNguyen
 
 Function:
