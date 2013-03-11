@@ -44,7 +44,7 @@ setup(){
 	echo -e $nvidia > /usr/share/applications/nvidia-settings.desktop
 	
 	if [ ! -f "/etc/bumblebee/bumblebee_database" ]; then
-		echo -e "#Database\n@False\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
+		echo -e "@2\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
 	fi
 	chgrp bumblebee /etc/bumblebee/bumblebee_database
 	chmod g+wr /etc/bumblebee/bumblebee_database
