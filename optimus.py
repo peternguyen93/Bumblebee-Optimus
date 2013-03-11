@@ -7,7 +7,7 @@
 """
 
 __author__ = 'Peter Nguyen'
-__version__  = 'v0.6.1 released'
+__version__  = 'v0.7 released'
 
 import os
 import sys
@@ -33,7 +33,10 @@ class optimus_function:
 				if(line[0] not in black_list):
 					list_data.append(line)
 				elif(line[0]=='@'):
-					option = line
+					if(line == '@1'):
+						option = '@True'
+					elif(line == '@2'):
+						option = '@False'
 		f_open.close()
 		return (option[1:],list_data)
 	#change exec line to run with optirun
@@ -65,13 +68,18 @@ class optimus_function:
 			f_open.write(line+'\n')
 		f_open.close()
 
-	def update_database(self,value,data):
+	def update_option(self,value):
+		fw = open(database_link,'r+')
+		fw.seek(0)
+		fw.writelines(value)
+		fw.close()
+	
+	def update_database(self,data,header):
 		outfile = []
-		if(value != None):
-			outfile.append(value)
 		outfile.extend(data)
-		outfile.append('#nvidia-settings')
 		fw = open(database_link,'w')
+		for l in header:
+			fw.write(l+'\n')
 		for line in outfile:
 			fw.write(line+'\n')
 		fw.close()
@@ -81,6 +89,7 @@ class Optimus(QWidget):
 		super(Optimus,self,*args).__init__()
 		self.item_choice=''
 		self.SetupGui()
+		self.header = [] #header db
 	    
 	def SetupGui(self):
 		self.icon=QSystemTrayIcon(QIcon(icon_link),self)
@@ -112,7 +121,7 @@ class Optimus(QWidget):
 		self.test_graphic = QPushButton('Test Video Card',self)
 		self.Exit = QPushButton('Exit',self)
 		self.radiobutton1 = QRadioButton('Nvidia Mode')
-		self.radiobutton2 = QRadioButton('OnBoard Mode')
+		self.radiobutton2 = QRadioButton('Onboard Mode')
 		#self.radiobutton3 = QRadioButton('Enable Auto Mode')
 		
 		self.check = db[0]
@@ -208,7 +217,8 @@ class Optimus(QWidget):
 		#load data from database
 		for app in self.list_data:
 			call(['cp',app+'.optimus',app])
-		optimus_function().update_database('@True',self.list_data)
+		self.header = ['@1','#nvidia-settings']
+		optimus_function().update_option('@1')
 		self.radiobutton1.setChecked(True)
 		self.radiobutton2.setChecked(False)
 	#fix path
@@ -220,7 +230,8 @@ class Optimus(QWidget):
 		#load data from database
 		for app in self.list_data:
 			call(['cp',app+'.save',app])
-		optimus_function().update_database('@False',self.list_data)
+		self.header = ['@2','#nvidia-settings']
+		optimus_function().update_option('@2')
 		self.radiobutton1.setChecked(False)
 		self.radiobutton2.setChecked(True)
 	
@@ -233,7 +244,7 @@ class Optimus(QWidget):
 				#update ListView
 				self.lv.addItem(app_name)
 				#write new item to database
-				optimus_function().update_database('@True',self.list_data)
+				optimus_function().update_database(self.list_data,self.header)
 				optimus_function().edit_file(fname)
 				os.system('cp %s.optimus %s' % (fname,fname))
 			else:
@@ -251,7 +262,7 @@ class Optimus(QWidget):
 			self.lv.clear()
 			for app in self.list_data:
 				self.lv.addItem(basename(app))
-			optimus_function().update_database('@True',self.list_data)
+			optimus_function().update_database(self.list_data,self.header)
 			if(os.path.exists(diff+'.save') and os.path.exists(diff+'.optimus')):
 				os.remove(diff)
 				call(['mv',diff+'.save',diff])
@@ -287,6 +298,6 @@ def main():
 if __name__ == "__main__":
 	if not os.path.exists (database_link):
 		f_open = open(database_link,'a')
-		f_open.write('#Database\n@False\n#nvidia-settings\n')
+		f_open.write('@2\n#nvidia-settings\n')
 		f_open.close()
 	main()
