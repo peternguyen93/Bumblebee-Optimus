@@ -3,24 +3,24 @@
 #Bumblebee Optimus Laucher Setup script
 #Peter Nguyen
 
-optimus="[Desktop Entry]\n
-Name=bumblebee-optimus\n
-GenericName=Bumblebee Optimus\n
-Comment=Bumblebee Optimus\n
-Exec=optimus
-Icon=optimus.png\n
-Terminal=false\n
-Type=Application\n
+optimus="[Desktop Entry]\r\r\n
+Name=bumblebee-optimus\r\r\n
+GenericName=Bumblebee Optimus\r\r\n
+Comment=Bumblebee Optimus\r\r\n
+Exec=optimus\r\r\n
+Icon=optimus.png\r\r\n
+Terminal=false\r\r\n
+Type=Application\r\r\n
 Categories=System"
 
-nvidia="[Desktop Entry]\n
-Name=nvidia-settings\n
-GenericName=Nvidia Settings\n
-Comment=Nvidia Settings\n
-Exec=optirun nvidia-settings -c :8\n
-Icon=nvidia-current-settings.png\n
-Terminal=false\n
-Type=Application\n
+nvidia="[Desktop Entry]\r\r\n
+Name=nvidia-settings\r\r\n
+GenericName=Nvidia Settings\r\r\n
+Comment=Nvidia Settings\r\r\n
+Exec=optirun nvidia-settings -c :8\r\n
+Icon=nvidia-current-settings.png\r\n
+Terminal=false\r\n
+Type=Application\r\n
 Categories=System"
 
 setup(){
@@ -37,14 +37,14 @@ setup(){
 	chmod -R g+r+w /usr/share/applications
 	chmod g+x /usr/bin/optimus
 	
-	echo -e $optimus > /usr/share/applications/bumblebee_optimus.desktop
+	echo $optimus > /usr/share/applications/bumblebee_optimus.desktop
 	
 	cp -Rv optimus.png /usr/share/icons
 	
-	echo -e $nvidia > /usr/share/applications/nvidia-settings.desktop
+	echo $nvidia > /usr/share/applications/nvidia-settings.desktop
 	
 	if [ ! -f "/etc/bumblebee/bumblebee_database" ]; then
-		echo -e "@False\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
+		echo "@False\r\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
 	fi
 	chgrp bumblebee /etc/bumblebee/bumblebee_database
 	chmod g+wr /etc/bumblebee/bumblebee_database
@@ -79,7 +79,7 @@ remove(){
 
 
 # Main Control
-if [ $(id -u) == 0 ]; then
+if [ $(id -u) -eq 0 ]; then
 	echo "Checking bumblebee....."
 	if [ -f "/usr/bin/optirun" ]; then
 		echo "Bumblebee was installed."
