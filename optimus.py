@@ -11,7 +11,7 @@
 # along with Optimus Laucher.  If not, see <http://www.gnu.org/licenses/>.
 
 __author__ = 'Peter Nguyen'
-__version__  = 'v0.8 alpha 1'
+__version__  = 'v0.8 alpha 2'
 
 import os
 import sys
@@ -117,7 +117,6 @@ class Optimus(QWidget):
 	def SetupGui(self):
 		# Setup GUI 
 		self.LoadData()
-		bumblebeeModeCheck = optimus_function().checkPrimus()
 		self.icon = QSystemTrayIcon(QIcon(icon),self)
 		self.icon.isSystemTrayAvailable()
 		
@@ -220,7 +219,7 @@ class Optimus(QWidget):
 		self.icon.activated.connect(self.Activate)
 		self.exit.clicked.connect(self.QuitProgram)
 	    
-		self.exitAction.triggered.connect(self.QuitProgram)
+		self.exitAction.triggered.connect(self.CloseEvent)
 		self.aboutAction.triggered.connect(self.About)
 		self.nvidia_mode.triggered.connect(self.NvidiaMode)
 		self.onboard_mode.triggered.connect(self.IntelMode)
@@ -252,7 +251,6 @@ class Optimus(QWidget):
 				call(['cp',app+'.optimus',app])
 		try:
 			self.header[0] = '@'+self.check #reset value
-			self.header[1] = '$'+str(self.bumblebeeMode)
 		except IndexError:
 			logging.error('Error When Mode Value Not Found')
 			sys.exit(1)
@@ -274,7 +272,6 @@ class Optimus(QWidget):
 				call(['cp',app+'.save',app])
 		try:
 			self.header[0] = '@'+self.check
-			self.header[1] = '$'+str(self.bumblebeeMode)
 		except IndexError:
 			logging.error('Error When Mode Value Not Found')
 			sys.exit(1)
