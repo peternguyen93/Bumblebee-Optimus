@@ -1,7 +1,7 @@
 Bumblebee-Optimus
 =================
 Bumblebee-Optimus
-- Version: 0.8 alpha 1
+- Version: 0.8 alpha 2
 - Author: PeterNguyen
 - License: GPLv3
 
