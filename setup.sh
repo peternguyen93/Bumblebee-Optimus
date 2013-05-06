@@ -1,22 +1,22 @@
-#!/bin/sh
+#!/bin/bash
 
 #Bumblebee Optimus Laucher Setup script
 #Peter Nguyen
 
-optimus="[Desktop Entry]\r\r\n
-Name=bumblebee-optimus\r\r\n
-GenericName=Bumblebee Optimus\r\r\n
-Comment=Bumblebee Optimus\r\r\n
-Exec=optimus\r\r\n
-Icon=optimus.png\r\r\n
-Terminal=false\r\r\n
+optimus="[Desktop Entry]\r\n
+Name=bumblebee-optimus\r\n
+GenericName=Bumblebee Optimus\r\n
+Comment=Bumblebee Optimus\r\n
+Exec=optimus\r\n
+Icon=optimus.png\r\n
+Terminal=false\r\n
 Type=Application\r\r\n
 Categories=System"
 
-nvidia="[Desktop Entry]\r\r\n
-Name=nvidia-settings\r\r\n
-GenericName=Nvidia Settings\r\r\n
-Comment=Nvidia Settings\r\r\n
+nvidia="[Desktop Entry]\r\n
+Name=nvidia-settings\r\n
+GenericName=Nvidia Settings\r\n
+Comment=Nvidia Settings\r\n
 Exec=optirun nvidia-settings -c :8\r\n
 Icon=nvidia-current-settings.png\r\n
 Terminal=false\r\n
@@ -44,7 +44,7 @@ setup(){
 	echo $nvidia > /usr/share/applications/nvidia-settings.desktop
 	
 	if [ ! -f "/etc/bumblebee/bumblebee_database" ]; then
-		echo "@False\r\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
+		echo -e "@False\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
 	fi
 	chgrp bumblebee /etc/bumblebee/bumblebee_database
 	chmod g+wr /etc/bumblebee/bumblebee_database
