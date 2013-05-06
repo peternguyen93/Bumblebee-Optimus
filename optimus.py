@@ -11,7 +11,7 @@
 # along with Optimus Laucher.  If not, see <http://www.gnu.org/licenses/>.
 
 __author__ = 'Peter Nguyen'
-__version__  = 'v0.8 alpha 2'
+__version__  = 'v0.8 alpha 3'
 
 import os
 import sys
@@ -83,9 +83,9 @@ class optimus_function:
 		#replace old Exec command 
 		f_open = open (optimus_app,'w')
 		if basename(file_name) == 'nvidia-settings':
-			execute = 'Exec=optirun %s -c :8' % (basename(file_name))
+			execute = 'Exec=optirun '+basename(file_name)+' -c :8'
 		else:
-			execute = 'Exec=optirun %s %U' % (basename(file_name))
+			execute = 'Exec=optirun '+(basename(file_name))+' %U' 
 		for i in num:
 			data[i] = execute
 		#write new data to file
