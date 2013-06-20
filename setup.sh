@@ -2,7 +2,7 @@
 
 #Bumblebee Optimus Laucher Setup script
 #Peter Nguyen
-
+database=~/.local/share/bumblebee/optimus_DataBase.db
 optimus="[Desktop Entry]\r\n
 Name=bumblebee-optimus\r\n
 GenericName=Bumblebee Optimus\r\n
@@ -13,105 +13,87 @@ Terminal=false\r\n
 Type=Application\r\r\n
 Categories=System"
 
-nvidia="[Desktop Entry]\r\n
-Name=nvidia-settings\r\n
-GenericName=Nvidia Settings\r\n
-Comment=Nvidia Settings\r\n
-Exec=optirun nvidia-settings -c :8\r\n
-Icon=nvidia-current-settings.png\r\n
-Terminal=false\r\n
-Type=Application\r\n
-Categories=System"
-
 setup(){
-
 	if [ -f "/usr/bin/optimus" ]; then
-		echo "Update bumblebee optimus...."
+		echo -e "\e[1;33m[+]\e[0m Update bumblebee optimus...."
 	else
-		echo "Install bumblebee optimus....."
+		echo -e "\e[1;33m[+]\e[0m Install bumblebee optimus....."
 	fi
-
-	cp -Rv optimus.py /usr/bin/optimus #install optimus
-	chgrp bumblebee /usr/bin/optimus
-	chgrp -R bumblebee /usr/share/applications #default link containts all application
-	chmod -R g+r+w /usr/share/applications
-	chmod g+x /usr/bin/optimus
 	
-	echo $optimus > /usr/share/applications/bumblebee_optimus.desktop
+	echo -e "\e[1;33m[+]\e[0m Copying file:"
+	sudo cp -Rv optimus.py /usr/bin/optimus #install optimus
+	sudo chgrp bumblebee /usr/bin/optimus
+	sudo chgrp -R bumblebee /usr/share/applications #default link containts all application
+	sudo chmod -R g+r+w /usr/share/applications
+	sudo chmod g+x /usr/bin/optimus
+	sudo echo -e $optimus > /usr/share/applications/bumblebee_optimus.desktop
+	sudo cp -Rv optimus.png /usr/share/icons
 	
-	cp -Rv optimus.png /usr/share/icons
-	
-	echo $nvidia > /usr/share/applications/nvidia-settings.desktop
-	
-	if [ ! -f "/etc/bumblebee/bumblebee_database" ]; then
-		echo -e "@False\n#nvidia-settings" > /etc/bumblebee/bumblebee_database
+	if [ ! -f $database ]; then
+		echo -e "\e[1;33m[+]\e[0m Copying database file"
+		mkdir ~/.local/share/bumblebee/
+		cp -Rv optimus_DataBase.db $database
 	fi
-	chgrp bumblebee /etc/bumblebee/bumblebee_database
-	chmod g+wr /etc/bumblebee/bumblebee_database
-	
-	sleep 1
-	echo "Done."
-	echo "If you want to increase performance of nvidia, install primus"
+	chmod 664 $database
+	echo -e "\e[1;33m[+]\e[0m Done."
+	echo -e "\e[1;31m[!]\e[0m Only this user can insert and remove app, which is choosen to run with nvidia card"
+	echo -e "\e[1;31m[!]\e[0m If you want to increase performance of nvidia, install primus"
 }
 
 remove(){
-	echo "Checking optimus..."
+	echo -e "\e[1;33m[+]\e[0mChecking optimus..."
 	if [ -f "/usr/bin/optimus" ]; then
-		echo "Removing......"
-		rm -f /usr/bin/optimus 
-		rm -f /usr/share/applications/bumblebee-optimus.desktop
+		echo -e "\e[1;33m[+]\e[0m Removing......"
+		sudo rm -f /usr/bin/optimus 
+		sudo rm -f /usr/share/applications/bumblebee-optimus.desktop
 		for file in $(find /usr/share/applications/ -name *.desktop.save); do #restore file
-			mv $file ${file%.*}
+			sudo mv $file ${file%.*}
 		done
-		chgrp -R root /usr/share/applications
-		chown -R root /usr/share/applications
-		chmod -R g-w /usr/share/applications
-		rm -f /usr/share/icons/optimus.png
-		for line in $(cat /etc/bumblebee/bumblebee_database); do #remove all file
-			rm -f line".optimus"
+		for file in $(find /usr/share/applications/ -name *.desktop.optimus); do #remove all file
+			sudo rm $file
 		done
-		rm -f /etc/bumblebee/bumblebee_database
-		echo "Done."
+		sudo chgrp -R root /usr/share/applications
+		sudo chown -R root /usr/share/applications
+		sudo chmod -R g-w /usr/share/applications
+		sudo rm -f /usr/share/icons/optimus.png
+		rm -f $database
+		rm -f ~/.local/log/optimus_laucher.log
+		echo -e "\e[1;33m[+]\e[0mDone."
 	else
-		echo "Optimus isn\'t installed"
+		echo -e "\e[1;31m[!]\e[0m Optimus isn\'t installed"
 	fi
 }
 
 
 # Main Control
-if [ $(id -u) -eq 0 ]; then
-	echo "Checking bumblebee....."
-	if [ -f "/usr/bin/optirun" ]; then
-		echo "Bumblebee was installed."
-		sleep 1
-		if [ -f "/usr/bin/optimus" ]; then
-			echo "Bumblebee Optimus Laucher was installed."
-			menu="1 - Update Bumblebee Optimus Laucher"
-		else
-			menu="1 - Setup Bumblebee Optimus Laucher"
-		fi
-		sleep 1
-		echo "#####################################"
-		echo $menu
-		echo "2 - Remove Bumblebee Optimus Laucher"
-		echo "3 - Quit"
-		echo "#####################################"
-		echo -n "Choices : "; read x
-		case "$x" in
-			"1" )
-				echo "Setup starting..."
-				setup
-				;;
-			"2" )
-				echo "Removing..."
-				remove
-				;;
-			"3" )   exit 0 ;;
-			* )     echo "Press 1 or 2 to choice options";;
-		esac
+echo -e "\e[1;33m[+]\e[0m Checking bumblebee....."
+if [ -f "/usr/bin/optirun" ]; then
+	echo -e "\e[1;31m[!]\e[0m Bumblebee was installed."
+	if [ -f "/usr/bin/optimus" ]; then
+		echo -e "\e[1;31m[!]\e[0m Bumblebee Optimus Laucher was installed."
+		menu="\e[1;32m1 - Update Bumblebee Optimus Laucher\e[0m"
 	else
-		echo "Bumblebee isn't installed. Please install now."
+		menu="\e[1;32m1 - Setup Bumblebee Optimus Laucher\e[0m"
 	fi
+	sleep 1
+	echo -e "\e[1;32m#####################################\e[0m"
+	echo -e $menu
+	echo -e "\e[1;32m2 - Remove Bumblebee Optimus Laucher\e[0m"
+	echo -e "\e[1;32m3 - Quit\e[0m"
+	echo -e "\e[1;32m#####################################\e[0m"
+	echo -e -n "\e[1;36mChoices : \e[0m"; read x
+	case "$x" in
+		"1" )
+			echo -e "\e[1;33m[+]\e[0m Setup starting..."
+			setup
+			;;
+		"2" )
+			echo -e "\e[1;33m[+]\e[0m Remove App starting..."
+			remove
+			;;
+		"3" )   exit 0 ;;
+		* )     echo -e "\e[1;31m[!]\e[0m Press 1 or 2 to choice options";;
+	esac
 else
-	echo "You must use root to execute this script!"
+		echo -e "\e[1;31m[!]\e[0m Bumblebee isn't installed. Please install now."
 fi
