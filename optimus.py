@@ -11,7 +11,7 @@
 # along with Optimus Laucher.  If not, see <http://www.gnu.org/licenses/>.
 
 __author__ = 'Peter Nguyen'
-__version__  = 'v0.8 beta 1'
+__version__  = 'v0.8 beta 2'
 
 import os
 import sys
@@ -20,127 +20,74 @@ from PyQt4.QtGui import *
 import re
 from subprocess import call
 import logging
-import sqlite3
+import json
 
 #Setup Logging File
 logPath = os.path.expanduser('~/.local/log/')
 if not os.path.exists(logPath):
 	os.mkdir(logPath)
-FORMAT = "[+] %(asctime)-15s %(message)s"
+FORMAT = "[+] %(asctime)-15s %(message)s" #errorlog format
 logging.basicConfig(filename = logPath+'optimus_laucher.log',level = logging.DEBUG,format=FORMAT)
 
-database = os.path.expanduser('~/.local/share/bumblebee/optimus_DataBase.db')
+jsonfile = '/etc/bumblebee/optimus_Database.json'
 icon = '/usr/share/icons/optimus.png'
 
-# return '' if it's not contains filename
-# /home/file.py return 
-# /home/ return ''
-
-class AppInfo:
+class OptimusJsonData:
 	'''
-		@Appinfo structure
-		appname
-		applink
-		appicon
+		@OptimusJsonData
+		- Read/Write data in json structure
 	'''
-	appname = ''
-	applink = ''
-	appicon = ''
-	      
-	def __init__(self,app_tuple = None):
-		if not app_tuple:
-			#do nothing, overload constructor
-			pass
-		elif type(app_tuple) is tuple and len(app_tuple) == 3:
-			self.appname = app_tuple[0]
-			self.applink = app_tuple[1]
-			self.appicon = app_tuple[2]
+	__data = None
+	errorMsg = ''
+	errorCode = False
 	
-	def toTuple(self):
-		return (self.appname,self.applink,self.appicon)
-	
-	def isFull(self):
-		if self.appname and self.applink and self.appicon:
-			return True
+	def __checkObject(self,jsonObject):
+		#check JsonObject data is match with {'status':/value/,'apps':[{app1},{apps2}]
+		if type(jsonObject) <> dict or jsonObject.keys() <> ['status','apps']:
+			self.errorCode = True
+			self.errorMsg = '[!] Wrong type data'
+		elif jsonObject['status'] not in [0,1]:
+			self.errorCode = True
+			self.errorMsg = '[!] Wrong type status data'
+		elif type(jsonObject['apps']) <> list:
+			self.errorCode = True
+			self.errorMsg = '[!] Wrong type apps data'
 		else:
-			return False
-
-class OptimusDatabase:
-	"""
-		@OptimusDatabase
-		opening a connection to database
-		allow method connection to database 
-	"""
-	__conn = None #private object
-	messageError = '' #error code return
-	def __init__(self):
-		self.__conn = sqlite3.connect(database) #connect to database
-		
-	def insert_Appinfo(self,appinfo):
-		isDone = False #code return
-		c = self.__conn.cursor() #get current cursor in database
-		if isinstance(appinfo,AppInfo):
-			try:
-				c.execute('INSERT INTO apps_info VALUES(?,?,?)',appinfo.toTuple())
-				self.__conn.commit() #commit change
-				isDone = True
-			except sqlite3.DatabaseError as err:
-				self.messageError = 'Message : %s' % (err.message)
-		else:
-			self.messageError = 'Message : Wrong type data'
-		return isDone
-		
-	def delete_Appinfo(self,appname):
-		isDone = False #code return
-		c = self.__conn.cursor()#get current cursor in database
-		try:
-			c.execute('DELETE FROM apps_info WHERE appname=:app',{'app':appname})
-			self.__conn.commit() #commit change
-			isDone = True
-		except sqlite3.DatabaseError as err:
-			self.messageError = 'Message : %s' % (err.message)
-		return isDone
+			if jsonObject['apps']:
+				for i in jsonObject['apps']:
+					if type(i) <> dict or i.keys() <> ['appicon', 'applink', 'appname']:
+						self.errorCode = True
+						self.errorMsg = '[!] Wrong type apps item data'
+						break
 	
-	def get_Appinfo(self):
-		result = [] #get result from database
-		c = self.__conn.cursor()
-		try:
-			fetch = c.execute('SELECT * FROM apps_info')
-			for line in fetch:
-				result.append(AppInfo(line))
-		except sqlite3.DatabaseError as err:
-			self.messageError = 'Message : %s' % (err.message)
+	def update_JsonData(self,jsonObject):
+		#update JsonData when jsonObject had changed
+		self.__checkObject(jsonObject)
+		if not self.errorCode:
+			json_read_file = open(jsonfile,'w')
+			text = json.dumps(jsonObject)
+			json_read_file.write(text)
+			json_read_file.close()
+			self.errorCode = False
+		else:
+			self.errorMsg = '[!] Update Data was failed'
+		return self.errorCode #errorCode = False whe code is raise error
+	
+	def get_JsonData(self):
+		#get all JsonData from Json file
+		result = {}
+		json_read_file = open(jsonfile,'r')
+		fread = json_read_file.read()
+		json_read_file.close()
+		if fread:#if file is not null
+			self.__data = json.loads(fread) #convert to object
+			self.__checkObject(self.__data) #check object
+			if not self.errorCode: #not error
+				result = self.__data #get object
+		else:
+			self.errorCode = True
+			self.errorMsg = 'Empty data file !'
 		return result
-	
-	def update_Status(self,status):
-		isDone = False
-		c = self.__conn.cursor() #get current cursor in database
-		if type(status) is int:
-			if status in [0,1]: #status has value must be 0 or 1
-				try:
-					c.execute('UPDATE status SET nvidia_status=%d' % status)
-					self.__conn.commit() #commit change
-					isDone = True
-				except sqlite3.DatabaseError as err:
-					self.messageError = 'Message : %s' % (err.message)
-			else:
-				self.messageError = 'Message : status value must be zero or one'
-		else:
-			self.messageError = 'Message : Wrong type data'
-		return isDone
-	 
-	def get_Statusinfo(self):
-		status = -1
-		c = self.__conn.cursor()
-		try:
-			c.execute('SELECT nvidia_status FROM status LIMIT 1')
-			status = c.fetchone()[0]
-		except sqlite3.DatabaseError as err:
-			self.messageError = 'Message : %s' % (err.message)
-		return status
-	
-	def close_Database(self):
-		self.__conn.close()
 
 class OptimusIOConnection:
 	'''
@@ -155,29 +102,30 @@ class OptimusIOConnection:
 			return False
 	
 	def parse_File_Object_To_AppInfo(self,file_name):
-		appinfo = AppInfo()
+		#parse file details to appinfo which is a dict type
+		appinfo = {}
 		if file_name != '':
 			fread = open(file_name,'r')
 			data = fread.read()
-			appinfo.applink = file_name
+			appinfo['applink'] = file_name
 			d = re.findall(r'Name=(.+?)\n',data)
 			if len(d) > 0 :
-				appinfo.appname = d[0]
+				appinfo['appname'] = d[0]
 			d = re.findall(r'Icon=(.+?)\n',data)
 			if len(d) > 0:
-				appinfo.appicon = d[0]
+				appinfo['appicon'] = d[0]
 		return appinfo
 	
 	#fix Edit_file
-	def EditFile(self,appinfo):
+	def EditFile(self,applink):
 		#edit applications to run optirun
-		optimus_app = appinfo.applink + '.optimus'
+		optimus_app = applink + '.optimus'
 		#__run__ = check_primus()
-		if os.path.exists (appinfo.applink):
-			call(['cp',appinfo.applink,appinfo.applink + '.save'])
-			call(['cp',appinfo.applink,optimus_app])
+		if os.path.exists (applink):
+			call(['cp',applink,applink + '.save'])
+			call(['cp',applink,optimus_app])
 		#find line contains Exec=
-		fread = open (appinfo.applink,'r')
+		fread = open (applink,'r')
 		data = fread.read().split('\n')
 		num = []
 		for line in range(len(data)):
@@ -186,7 +134,7 @@ class OptimusIOConnection:
 		fread.close()
 		#replace old Exec command 
 		fwrite = open (optimus_app,'w')
-		name = self.getFilename(appinfo.applink)
+		name = self.getFilename(applink)
 		if name == 'nvidia-settings':
 			execute = 'Exec=optirun nvidia-settings -c :8'
 		else:
@@ -199,6 +147,7 @@ class OptimusIOConnection:
 		fwrite.close()
 	
 	def getFilename(self,filename):
+		#get basename of file
 		basename = os.path.basename(filename)
 		name = ''
 		if basename.index('.'):
@@ -220,19 +169,17 @@ class Optimus(QWidget):
 	
 	def LoadData(self):
 		#load configuration of program from database
-		database = OptimusDatabase()
-		self.appinfo_Data = database.get_Appinfo()
-		self.status = database.get_Statusinfo()
-		if self.status < 0:
-			logging.error(database.messageError)
-			QMessageBox.question(self,'Error',database.messageError,QMessageBox.Ok)
+		database = OptimusJsonData()
+		self.data = database.get_JsonData()
+		if self.data['status'] < 0:
+			logging.error("[!] Not load status nvidia card")
+			QMessageBox.question(self,'Error',"[!] Not load status nvidia card",QMessageBox.Ok)
 			sys.exit(1)
-		database.close_Database()
 		#load listview item
 		self.lv = QListWidget()
-		if len(self.appinfo_Data): #if self.appinfo_Data not 0
-			for item in self.appinfo_Data:
-				self.lv.addItem(item.appname)
+		if len(self.data['apps']): #if self.appinfo_Data not 0
+			for item in self.data['apps']:
+				self.lv.addItem(item['appname'])
 	
 	def SetupGui(self):
 		# Setup GUI 
@@ -261,13 +208,13 @@ class Optimus(QWidget):
 		self.radiobutton2 = QRadioButton('Onboard Mode')
 		self.radiobutton3 = QRadioButton('Optirun')
 		
-		if not self.status:
+		if not self.data['status']:
 			self.add.setEnabled(False)
 			self.remove.setEnabled(False)
 			self.lv.setVisible(False)
 			self.radiobutton1.setChecked(False)
 			self.radiobutton2.setChecked(True)
-		elif self.status:
+		elif self.data['status']:
 			self.lv.setVisible(True)
 			self.add.setEnabled(True)
 			self.remove.setEnabled(True)
@@ -327,59 +274,55 @@ class Optimus(QWidget):
 		else:
 			QMessageBox.question(self,'Error','<h1> Check Your Mesa Package To Use This Function </h1>'
 			    ,QMessageBox.Ok)
-		if self.status:
+		if self.data['status']:
 			call(['optirun',glx_test])
 		else:
 			call([glx_test])
 	
-	#fix path
-	def NvidiaMode(self): #This method allow program to change video mode of applications to nvidia 
-		self.status = 1#set value
+	def NvidiaMode(self):
+		#This method allow program to change video mode of applications to nvidia 
+		self.data['status'] = 1#set value
 		#write data into database
-		database = OptimusDatabase()
-		if database.update_Status(self.status):
+		database = OptimusJsonData()
+		if not database.update_JsonData(self.data):
 			self.add.setEnabled(True)
 			self.remove.setEnabled(True) 
-			
+				
 			#change app.applink call nvidia card
-			if self.appinfo_Data:
-				for app in self.appinfo_Data:
-					call(['cp',app.applink+'.optimus',app.applink])
-			
+			if self.data['apps']:
+				for app in self.data['apps']:
+					call(['cp',app['applink']+'.optimus',app['applink']])
+				
 			self.radiobutton1.setChecked(True)
 			self.radiobutton2.setChecked(False)
 		else:
-			logging.error(database.messageError)
-			QMessageBox.question(self,'Error',database.messageError,QMessageBox.Ok)
-			self.status = 0 #reset value
+			logging.error(database.errorMsg)
+			QMessageBox.question(self,'Error',database.errorMsg,QMessageBox.Ok)
+			self.data['status'] = 0 #reset value
 			self.radiobutton1.setChecked(False)
 			self.radiobutton2.setChecked(True)
-		database.close_Database()
 		
-	#fix path
 	def IntelMode(self):
-		self.status = 0#set value
+		self.data['status'] = 0#set value
 		#write data into database
-		database = OptimusDatabase()
-		if database.update_Status(self.status):
+		database = OptimusJsonData()
+		if not database.update_JsonData(self.data):
 			#IntelMode method allow to change NvidiaMode to IntelMode
 			self.add.setEnabled(False)
 			self.remove.setEnabled(False)
-			
+				
 			#change app.applink call intel card
-			if self.appinfo_Data:
-				for app in self.appinfo_Data:
-					call(['cp',app.applink+'.save',app.applink])
+			if self.data['apps']:
+				for app in self.data['apps']:
+					call(['cp',app['applink']+'.save',app['applink']])
 			self.radiobutton1.setChecked(False)
 			self.radiobutton2.setChecked(True)
-			
 		else:
-			logging.error(database.messageError)
-			QMessageBox.question(self,'Error',database.messageError,QMessageBox.Ok)
-			self.status = 1 #reset value
+			logging.error(database.errorMsg)
+			QMessageBox.question(self,'Error',database.errorMsg,QMessageBox.Ok)
+			self.data['status'] = 1 #reset value
 			self.radiobutton1.setChecked(True)
 			self.radiobutton2.setChecked(False)
-		database.close_Database()
 	
 	def AddProgram(self):
 		#AddProgram, append an application to applications list
@@ -388,25 +331,25 @@ class Optimus(QWidget):
 		if fname:
 			if os.path.exists(fname):
 				optimusIO = OptimusIOConnection()
-				database = OptimusDatabase()
+				database = OptimusJsonData()
 				appinfo = optimusIO.parse_File_Object_To_AppInfo(fname)
-				if appinfo.isFull:
+				if type(appinfo) is dict and len(appinfo) == 3:
 					#write new item to database
-					if database.insert_Appinfo(appinfo):
-						self.appinfo_Data.append(appinfo)
+					self.data['apps'].append(appinfo)
+					if not database.update_JsonData(self.data):
 						#update ListView
-						self.lv.addItem(appinfo.appname)
+						self.lv.addItem(appinfo['appname'])
 						#edit file
-						optimusIO.EditFile(appinfo)
-						call(['cp',appinfo.applink+'.optimus',appinfo.applink])
+						optimusIO.EditFile(appinfo['applink'])
+						call(['cp',appinfo['applink']+'.optimus',appinfo['applink']])
 					else:
-						QMessageBox.question(self,'Error',database.messageError,QMessageBox.Ok)
-						logging.error(database.messageError)
+						self.data['apps'].remove(appinfo)
+						QMessageBox.question(self,'Error',database.errorMsg,QMessageBox.Ok)
+						logging.error(database.errorMsg)
 				else:
 					msgErr = 'Error Value'
 					QMessageBox.question(self,'Error',msgErr,QMessageBox.Ok)
 					logging.error(msgErr)
-				database.close_Database()
 			else:
 				QMessageBox.question(self,'Alert','Error ! App doesn\'t exists',QMessageBox.Ok)
 
@@ -414,32 +357,29 @@ class Optimus(QWidget):
 	def RemoveProgram(self):
 		#RemoveProgram, remove an application to applications list
 		if self.item_choice:
-			for item in self.appinfo_Data:
-				if(item.appname == self.item_choice):
+			for item in self.data['apps']:
+				if(item['appname'] == self.item_choice):
 					diff = item
-					self.appinfo_Data.remove(item)
+					self.data['apps'].remove(item)
 					break
 			# remove app
-			database = OptimusDatabase()
-			if database.delete_Appinfo(diff.appname):
+			database = OptimusJsonData()
+			if not database.update_JsonData(self.data):
 				self.lv.clear()
-				for app in self.appinfo_Data:
-					self.lv.addItem(app.appname)
-				if(os.path.exists(diff.applink+'.save') and os.path.exists(diff.applink+'.optimus')):
-					os.remove(diff.applink)
-					call(['mv',diff.applink+'.save',diff.applink])
-					os.remove(diff.applink+'.optimus') 
+				for app in self.data['apps']:
+					self.lv.addItem(app['appname'])
+				if(os.path.exists(diff['applink']+'.save') and os.path.exists(diff['applink']+'.optimus')):
+					os.remove(diff['applink'])
+					call(['mv',diff['applink']+'.save',diff['applink']])
+					os.remove(diff['applink']+'.optimus') 
 				else:
 					msgerr = 'Message : Application doesn\'t exists'
 					logging.error(msgerr)
 					QMessageBox.question(self,'Error',msgerr,QMessageBox.Ok)
 			else:
-				logging.error(database.messageError)
-				QMessageBox.question(self,'Error',database.messageError,QMessageBox.Ok)
-				self.appinfo_Data.append(diff) #restore item when delete item is error
-			database.close_Database()
-		else:
-			QMessageBox.question(self,'Alert','Error ! No Item Was Choosen',QMessageBox.Ok)
+				logging.error(database.errorMsg)
+				QMessageBox.question(self,'Error',database.errorMsg,QMessageBox.Ok)
+				self.data['apps'].append(diff) #restore item when delete item is error
 
 	def QuitProgram(self):
 		sys.exit(1)
@@ -472,5 +412,10 @@ def main():
 
 #run app
 if __name__ == "__main__":
+	if not os.path.exists(jsonfile):
+		fwrite = open(jsonfile,'w')
+		data = {'status':0,'apps':[]}
+		text = json.dumps(data)
+		fwrite.write(text)
+		fwrite.close()
 	main()
-	#if program terminated -> update database
