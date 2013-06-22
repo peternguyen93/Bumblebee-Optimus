@@ -1,7 +1,7 @@
 Bumblebee-Optimus
 =================
 Bumblebee-Optimus
-- Version: 0.8 beta 1
+- Version: 0.8 beta 2
 - Author: PeterNguyen
 - License: GPLv3
 
@@ -12,10 +12,9 @@ Function:
 
 Other:
 - With apps installed in /opt not work.
+- Replacing sqlite by json structure
 
-Warning: when you update verion to 0.8 beta 1 you must run script setup of version 0.8 later to remove
-
-Warning: Only user was installed this software can insert or remove app to run with optirun
+Warning: when you update verion to 0.8 beta 2 you must run script setup of version 0.8 later to remove
 
 Dependence PyQt4:
 - For Ubuntu: sudo apt-get install python-qt4-dev
